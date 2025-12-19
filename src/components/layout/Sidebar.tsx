@@ -107,7 +107,7 @@ export const Sidebar = ({ userType }: SidebarProps) => {
 
   const getRoleLabel = () => {
     if (userRole === "admin") return "Project Manager";
-    if (userRole === "client") return userProfile?.company || "Client";
+    if (userRole === "client") return "Client";
     return "User";
   };
 
