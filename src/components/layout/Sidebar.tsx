@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -15,6 +16,8 @@ import {
   Calendar,
   Plus,
   Bell,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,6 +59,7 @@ const clientNavItems = [
 export const Sidebar = ({ userType }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const navItems = userType === "admin" ? adminNavItems : clientNavItems;
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -189,8 +193,25 @@ export const Sidebar = ({ userType }: SidebarProps) => {
           </Button>
         </div>
 
-        {/* Logout & Footer */}
-        <div className="px-4 py-4 border-t border-border space-y-3">
+        {/* Theme Toggle & Logout */}
+        <div className="px-4 py-4 border-t border-border space-y-2">
+          <Button
+            variant="ghost"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+          >
+            {theme === "dark" ? (
+              <>
+                <Sun className="w-5 h-5" />
+                <span>Light Mode</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-5 h-5" />
+                <span>Dark Mode</span>
+              </>
+            )}
+          </Button>
           <Button
             variant="ghost"
             onClick={handleLogout}
@@ -199,7 +220,7 @@ export const Sidebar = ({ userType }: SidebarProps) => {
             <LogOut className="w-5 h-5" />
             <span>Logout</span>
           </Button>
-          <p className="text-xs text-muted-foreground px-3">2024 SMAIT Digital License</p>
+          <p className="text-xs text-muted-foreground px-3 pt-2">2024 SMAIT Digital License</p>
         </div>
       </aside>
     </>
