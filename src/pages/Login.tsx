@@ -61,14 +61,14 @@ const Login = () => {
       {/* Left Panel - Animated Gradient Background */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden p-12 flex-col justify-center">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-rose-400 animate-gradient" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-rose-500/50 via-transparent to-orange-400/30 animate-gradient-reverse" />
-        <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-primary/40 to-rose-600/40 animate-gradient-slow" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-rose-500 to-secondary animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-secondary/80 via-transparent to-primary/50 animate-gradient-reverse" />
+        <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-primary/30 to-secondary/60 animate-gradient-slow" />
         
         {/* Floating orbs */}
-        <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-white/20 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 left-1/4 w-56 h-56 bg-rose-300/20 rounded-full blur-3xl animate-float-delayed" />
-        <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-orange-300/20 rounded-full blur-2xl animate-float-slow" />
+        <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-primary/30 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 left-1/4 w-56 h-56 bg-secondary/40 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-rose-400/30 rounded-full blur-2xl animate-float-slow" />
         
         {/* Content */}
         <div className="relative z-10">
