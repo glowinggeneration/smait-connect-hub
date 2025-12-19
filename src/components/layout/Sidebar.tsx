@@ -1,5 +1,6 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -45,7 +46,13 @@ const favoriteProjects = [
 
 export const Sidebar = ({ userType }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const navItems = userType === "admin" ? adminNavItems : clientNavItems;
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   return (
     <>
@@ -130,9 +137,17 @@ export const Sidebar = ({ userType }: SidebarProps) => {
           </Button>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border">
-          <p className="text-xs text-muted-foreground">2024 SMAIT Digital License</p>
+        {/* Logout & Footer */}
+        <div className="px-4 py-4 border-t border-border space-y-3">
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </Button>
+          <p className="text-xs text-muted-foreground px-3">2024 SMAIT Digital License</p>
         </div>
       </aside>
     </>
