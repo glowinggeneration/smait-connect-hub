@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,15 +8,35 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { User, Bell, Shield, Palette, Save } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Bell, Shield, Palette, Save, Camera, Loader2 } from "lucide-react";
+
+interface UserProfile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  avatar_url: string | null;
+}
 
 const AdminSettings = () => {
-  const [profile, setProfile] = useState({
-    name: "Admin User",
-    email: "admin@smaitdigital.com",
-    phone: "+1 234 567 890",
+  const location = useLocation();
+  const isClient = location.pathname.startsWith("/client");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    company: "",
   });
 
   const [notifications, setNotifications] = useState({
@@ -25,11 +46,136 @@ const AdminSettings = () => {
     weeklyReport: false,
   });
 
-  const handleSaveProfile = () => {
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully.",
-    });
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      setProfile(data);
+      setFormData({
+        full_name: data.full_name || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        company: data.company || "",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: formData.full_name,
+          phone: formData.phone || null,
+          company: formData.company || null,
+        })
+        .eq("user_id", profile.user_id);
+
+      if (error) throw error;
+
+      setProfile({ ...profile, ...formData });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been saved successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${profile.user_id}/avatar.${fileExt}`;
+
+      // Upload the file
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("user_id", profile.user_id);
+
+      if (updateError) throw updateError;
+
+      setProfile({ ...profile, avatar_url: publicUrl });
+      toast({
+        title: "Avatar Updated",
+        description: "Your avatar has been updated successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error uploading avatar",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleSaveNotifications = () => {
@@ -39,8 +185,27 @@ const AdminSettings = () => {
     });
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout userType={isClient ? "client" : "admin"}>
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout userType="admin">
+    <DashboardLayout userType={isClient ? "client" : "admin"}>
       <div className="space-y-6 max-w-4xl">
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
@@ -79,24 +244,51 @@ const AdminSettings = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-6">
-                  <Avatar className="w-20 h-20">
-                    <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                      AU
-                    </AvatarFallback>
-                  </Avatar>
-                  <Button variant="outline">Change Avatar</Button>
+                  <div className="relative">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={profile?.avatar_url || undefined} />
+                      <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                        {getInitials(profile?.full_name || "U")}
+                      </AvatarFallback>
+                    </Avatar>
+                    {uploadingAvatar && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Change Avatar
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG or GIF. Max 2MB.
+                    </p>
+                  </div>
                 </div>
 
                 <Separator />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
-                      value={profile.name}
+                      value={formData.full_name}
                       onChange={(e) =>
-                        setProfile({ ...profile, name: e.target.value })
+                        setFormData({ ...formData, full_name: e.target.value })
                       }
                     />
                   </div>
@@ -105,27 +297,45 @@ const AdminSettings = () => {
                     <Input
                       id="email"
                       type="email"
-                      value={profile.email}
-                      onChange={(e) =>
-                        setProfile({ ...profile, email: e.target.value })
-                      }
+                      value={formData.email}
+                      disabled
+                      className="bg-muted"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Email cannot be changed
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
-                      value={profile.phone}
+                      value={formData.phone}
                       onChange={(e) =>
-                        setProfile({ ...profile, phone: e.target.value })
+                        setFormData({ ...formData, phone: e.target.value })
                       }
+                      placeholder="+1 234 567 890"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      value={formData.company}
+                      onChange={(e) =>
+                        setFormData({ ...formData, company: e.target.value })
+                      }
+                      placeholder="Your company name"
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <Button variant="gradient" onClick={handleSaveProfile}>
-                    <Save className="w-4 h-4 mr-2" />
+                  <Button variant="gradient" onClick={handleSaveProfile} disabled={saving}>
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
                     Save Changes
                   </Button>
                 </div>
