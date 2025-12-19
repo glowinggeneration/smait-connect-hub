@@ -56,6 +56,54 @@ export type Database = {
           },
         ]
       }
+      meetings: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          date: string
+          description: string | null
+          duration: number
+          id: string
+          location: string | null
+          status: string
+          time: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          date: string
+          description?: string | null
+          duration?: number
+          id?: string
+          location?: string | null
+          status?: string
+          time: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          description?: string | null
+          duration?: number
+          id?: string
+          location?: string | null
+          status?: string
+          time?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

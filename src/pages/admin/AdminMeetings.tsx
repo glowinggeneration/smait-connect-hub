@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,173 +34,197 @@ import {
   MoreHorizontal,
   Trash2,
   Edit,
-  ExternalLink
+  ExternalLink,
+  Loader2,
+  Phone
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { format, isToday, isTomorrow, isPast, addDays } from "date-fns";
+import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Meeting {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   date: string;
   time: string;
-  duration: number; // in minutes
-  type: "video" | "in-person" | "phone";
-  attendees: string[];
-  location: string;
-  status: "upcoming" | "completed" | "cancelled";
+  duration: number;
+  type: string;
+  location: string | null;
+  client_id: string;
+  status: string;
 }
 
-const initialMeetings: Meeting[] = [
-  {
-    id: "1",
-    title: "Project Kickoff - TechCorp",
-    description: "Initial meeting to discuss project requirements and timeline",
-    date: format(new Date(), "yyyy-MM-dd"),
-    time: "14:00",
-    duration: 60,
-    type: "video",
-    attendees: ["John Smith", "Sarah Johnson"],
-    location: "Google Meet",
-    status: "upcoming",
-  },
-  {
-    id: "2",
-    title: "Design Review",
-    description: "Review the latest design mockups for the e-commerce platform",
-    date: format(new Date(), "yyyy-MM-dd"),
-    time: "16:30",
-    duration: 45,
-    type: "video",
-    attendees: ["Design Team", "John Smith"],
-    location: "Zoom",
-    status: "upcoming",
-  },
-  {
-    id: "3",
-    title: "Weekly Team Sync",
-    description: "Regular team sync to discuss progress and blockers",
-    date: format(addDays(new Date(), 1), "yyyy-MM-dd"),
-    time: "10:00",
-    duration: 30,
-    type: "video",
-    attendees: ["Team"],
-    location: "Google Meet",
-    status: "upcoming",
-  },
-  {
-    id: "4",
-    title: "Client Presentation - FinanceHub",
-    description: "Present the final deliverables to the client",
-    date: format(addDays(new Date(), 2), "yyyy-MM-dd"),
-    time: "11:00",
-    duration: 90,
-    type: "in-person",
-    attendees: ["Sarah Johnson", "Mike Brown"],
-    location: "Conference Room A",
-    status: "upcoming",
-  },
-  {
-    id: "5",
-    title: "Sprint Planning",
-    description: "Plan tasks for the next sprint",
-    date: format(addDays(new Date(), -1), "yyyy-MM-dd"),
-    time: "09:00",
-    duration: 60,
-    type: "video",
-    attendees: ["Development Team"],
-    location: "Zoom",
-    status: "completed",
-  },
-];
+interface Client {
+  user_id: string;
+  full_name: string;
+  company: string | null;
+}
 
 const AdminMeetings = () => {
-  const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [newMeeting, setNewMeeting] = useState({
     title: "",
     description: "",
     date: "",
     time: "",
     duration: "60",
-    type: "video" as Meeting["type"],
-    attendees: "",
+    type: "video",
+    client_id: "",
     location: "",
   });
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch meetings
+      const { data: meetingsData, error: meetingsError } = await supabase
+        .from("meetings")
+        .select("*")
+        .order("date", { ascending: true });
+
+      if (meetingsError) throw meetingsError;
+      setMeetings(meetingsData || []);
+
+      // Fetch clients
+      const { data: clientsData, error: clientsError } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, company");
+
+      if (clientsError) throw clientsError;
+      setClients(clientsData || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const upcomingMeetings = meetings.filter((m) => m.status === "upcoming");
   const pastMeetings = meetings.filter((m) => m.status === "completed");
-  const todayMeetings = upcomingMeetings.filter((m) => isToday(new Date(m.date)));
+  const todayMeetings = upcomingMeetings.filter((m) => isToday(parseISO(m.date)));
 
-  const handleCreateMeeting = () => {
-    if (!newMeeting.title || !newMeeting.date || !newMeeting.time) {
+  const handleCreateMeeting = async () => {
+    if (!newMeeting.title || !newMeeting.date || !newMeeting.time || !newMeeting.client_id) {
       toast({
         title: "Missing Information",
-        description: "Please fill in title, date, and time.",
+        description: "Please fill in title, date, time, and select a client.",
         variant: "destructive",
       });
       return;
     }
 
-    const meeting: Meeting = {
-      id: `meeting-${Date.now()}`,
-      title: newMeeting.title,
-      description: newMeeting.description,
-      date: newMeeting.date,
-      time: newMeeting.time,
-      duration: parseInt(newMeeting.duration),
-      type: newMeeting.type,
-      attendees: newMeeting.attendees.split(",").map((a) => a.trim()).filter(Boolean),
-      location: newMeeting.location || (newMeeting.type === "video" ? "Google Meet" : "TBD"),
-      status: "upcoming",
-    };
+    setIsCreating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-    setMeetings([meeting, ...meetings]);
-    setNewMeeting({
-      title: "",
-      description: "",
-      date: "",
-      time: "",
-      duration: "60",
-      type: "video",
-      attendees: "",
-      location: "",
-    });
-    setIsDialogOpen(false);
-    toast({
-      title: "Meeting Scheduled",
-      description: `${meeting.title} has been added to your calendar.`,
-    });
+      const { data, error } = await supabase
+        .from("meetings")
+        .insert({
+          title: newMeeting.title,
+          description: newMeeting.description || null,
+          date: newMeeting.date,
+          time: newMeeting.time,
+          duration: parseInt(newMeeting.duration),
+          type: newMeeting.type,
+          client_id: newMeeting.client_id,
+          created_by: user.id,
+          location: newMeeting.location || (newMeeting.type === "video" ? "Google Meet" : null),
+          status: "upcoming",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setMeetings([data, ...meetings]);
+      setNewMeeting({
+        title: "",
+        description: "",
+        date: "",
+        time: "",
+        duration: "60",
+        type: "video",
+        client_id: "",
+        location: "",
+      });
+      setIsDialogOpen(false);
+      toast({
+        title: "Meeting Scheduled",
+        description: `${data.title} has been added to the calendar.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const deleteMeeting = (id: string) => {
-    setMeetings(meetings.filter((m) => m.id !== id));
-    toast({
-      title: "Meeting Deleted",
-      description: "The meeting has been removed.",
-    });
+  const deleteMeeting = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("meetings")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setMeetings(meetings.filter((m) => m.id !== id));
+      toast({
+        title: "Meeting Deleted",
+        description: "The meeting has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const getTypeIcon = (type: Meeting["type"]) => {
+  const getClientName = (clientId: string) => {
+    const client = clients.find((c) => c.user_id === clientId);
+    return client?.full_name || "Unknown Client";
+  };
+
+  const getTypeIcon = (type: string) => {
     switch (type) {
       case "video":
         return <Video className="w-4 h-4" />;
       case "in-person":
         return <MapPin className="w-4 h-4" />;
       case "phone":
+        return <Phone className="w-4 h-4" />;
+      default:
         return <Clock className="w-4 h-4" />;
     }
   };
 
   const formatMeetingDate = (date: string) => {
-    const meetingDate = new Date(date);
+    const meetingDate = parseISO(date);
     if (isToday(meetingDate)) return "Today";
     if (isTomorrow(meetingDate)) return "Tomorrow";
     return format(meetingDate, "EEE, MMM d");
@@ -218,7 +242,7 @@ const AdminMeetings = () => {
               </Badge>
               <Badge 
                 className={`text-xs ${
-                  isToday(new Date(meeting.date)) 
+                  isToday(parseISO(meeting.date)) 
                     ? "bg-primary/10 text-primary" 
                     : "bg-muted text-muted-foreground"
                 }`}
@@ -235,15 +259,17 @@ const AdminMeetings = () => {
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                {meeting.time} ({meeting.duration} min)
+                {meeting.time.slice(0, 5)} ({meeting.duration} min)
               </div>
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {meeting.location}
-              </div>
+              {meeting.location && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {meeting.location}
+                </div>
+              )}
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                {meeting.attendees.length} attendees
+                {getClientName(meeting.client_id)}
               </div>
             </div>
           </div>
@@ -274,25 +300,29 @@ const AdminMeetings = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {meeting.attendees.length > 0 && (
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-            <div className="flex -space-x-2">
-              {meeting.attendees.slice(0, 4).map((attendee, i) => (
-                <Avatar key={i} className="w-8 h-8 border-2 border-background">
-                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                    {attendee.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">
-              {meeting.attendees.join(", ")}
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+          <Avatar className="w-8 h-8 border-2 border-background">
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+              {getClientName(meeting.client_id).slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm text-muted-foreground">
+            {getClientName(meeting.client_id)}
+          </span>
+        </div>
       </CardContent>
     </Card>
   );
+
+  if (loading) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="admin">
@@ -302,7 +332,7 @@ const AdminMeetings = () => {
           <div>
             <h1 className="text-2xl font-bold">Meetings</h1>
             <p className="text-muted-foreground">
-              Schedule and manage your meetings
+              Schedule and manage client meetings
             </p>
           </div>
 
@@ -317,7 +347,7 @@ const AdminMeetings = () => {
               <DialogHeader>
                 <DialogTitle>Schedule New Meeting</DialogTitle>
                 <DialogDescription>
-                  Create a new meeting and invite attendees.
+                  Create a new meeting with a client.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -329,6 +359,30 @@ const AdminMeetings = () => {
                     value={newMeeting.title}
                     onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client">Client *</Label>
+                  <Select
+                    value={newMeeting.client_id}
+                    onValueChange={(value) => setNewMeeting({ ...newMeeting, client_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.length > 0 ? (
+                        clients.map((client) => (
+                          <SelectItem key={client.user_id} value={client.user_id}>
+                            {client.full_name} {client.company && `(${client.company})`}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No clients available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
@@ -383,9 +437,7 @@ const AdminMeetings = () => {
                     <Label>Type</Label>
                     <Select
                       value={newMeeting.type}
-                      onValueChange={(value: Meeting["type"]) =>
-                        setNewMeeting({ ...newMeeting, type: value })
-                      }
+                      onValueChange={(value) => setNewMeeting({ ...newMeeting, type: value })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -397,15 +449,6 @@ const AdminMeetings = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="attendees">Attendees</Label>
-                  <Input
-                    id="attendees"
-                    placeholder="Names separated by commas"
-                    value={newMeeting.attendees}
-                    onChange={(e) => setNewMeeting({ ...newMeeting, attendees: e.target.value })}
-                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location / Link</Label>
@@ -421,7 +464,8 @@ const AdminMeetings = () => {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="gradient" onClick={handleCreateMeeting}>
+                <Button variant="gradient" onClick={handleCreateMeeting} disabled={isCreating}>
+                  {isCreating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Schedule Meeting
                 </Button>
               </DialogFooter>

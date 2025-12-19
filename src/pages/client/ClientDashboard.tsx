@@ -1,14 +1,11 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProjectCard, Project } from "@/components/projects/ProjectCard";
-import { TodaySchedule } from "@/components/dashboard/TodaySchedule";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { AvatarStack } from "@/components/ui/avatar-stack";
 import {
   FolderKanban,
   MessageSquare,
-  FileText,
   CheckCircle2,
   Send,
   Upload,
@@ -33,19 +30,6 @@ const mockProjects: Project[] = [
     progress: 90,
     lastUpdated: "1 day ago",
     dueDate: "2025-01-05",
-  },
-];
-
-const schedules = [
-  {
-    label: "Weekly sync with SMAIT",
-    title: "Project Review Call",
-    time: "15:00",
-    participants: [
-      { name: "Admin" },
-      { name: "Designer" },
-      { name: "You" },
-    ],
   },
 ];
 
@@ -83,11 +67,10 @@ const ClientDashboard = () => {
           </div>
 
           {/* Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { label: "Active Projects", value: "2", icon: FolderKanban, color: "text-primary" },
               { label: "Messages", value: "5", icon: MessageSquare, color: "text-blue-500" },
-              { label: "Documents", value: "12", icon: FileText, color: "text-amber-500" },
               { label: "Milestones", value: "8", icon: CheckCircle2, color: "text-emerald-500" },
             ].map((stat, index) => (
               <Card key={index}>
@@ -141,7 +124,6 @@ const ClientDashboard = () => {
 
         {/* Right Panel */}
         <div className="space-y-6">
-          <TodaySchedule schedules={schedules} />
           
           {/* Recent Updates */}
           <Card>
