@@ -48,11 +48,6 @@ const clientNavItems = [
   { icon: Settings, label: "Settings", path: "/client/settings", badge: null },
 ];
 
-const favoriteProjects = [
-  { name: "Redwhale Design", color: "bg-smait-teal" },
-  { name: "Mobile App Mock...", color: "bg-primary" },
-  { name: "UI Design Revisi...", color: "bg-amber-500" },
-];
 
 export const Sidebar = ({ userType }: SidebarProps) => {
   const location = useLocation();
@@ -172,25 +167,6 @@ export const Sidebar = ({ userType }: SidebarProps) => {
             })}
           </nav>
 
-          {/* Favorites Section */}
-          {userType === "admin" && (
-            <div className="mt-8">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 mb-3">
-                Favorites
-              </p>
-              <div className="space-y-1">
-                {favoriteProjects.map((project, index) => (
-                  <button
-                    key={index}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors w-full text-left"
-                  >
-                    <div className={cn("w-3 h-3 rounded-full", project.color)} />
-                    <span className="text-sm truncate">{project.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Add Button */}
