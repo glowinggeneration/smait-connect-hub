@@ -34,6 +34,7 @@ const adminNavItems = [
   { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
   { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
+  { icon: FileText, label: "Briefs", path: "/admin/briefs" },
   { icon: Users, label: "Clients", path: "/admin/clients" },
   { icon: Clock, label: "Standups", path: "/admin/standups" },
   { icon: Calendar, label: "Meetings", path: "/admin/meetings", badge: 5 },
@@ -43,6 +44,7 @@ const adminNavItems = [
 const clientNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/client", badge: null },
   { icon: FolderKanban, label: "My Projects", path: "/client/projects", badge: null },
+  { icon: Plus, label: "Create New Brief", path: "/client/new-brief", badge: null },
   { icon: Calendar, label: "Calendar", path: "/client/calendar", badge: null },
   { icon: MessageSquare, label: "Messages", path: "/client/messages", badge: 3 },
   { icon: Settings, label: "Settings", path: "/client/settings", badge: null },
