@@ -32,13 +32,13 @@ interface UserProfile {
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/admin" },
-  { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
-  { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
+  { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
   { icon: FileText, label: "Briefs", path: "/admin/briefs" },
-  { icon: Users, label: "Clients", path: "/admin/clients" },
+  { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
   { icon: Clock, label: "Standups", path: "/admin/standups" },
   { icon: Calendar, label: "Meetings", path: "/admin/meetings", badge: 5 },
+  { icon: Users, label: "Clients", path: "/admin/clients" },
   { icon: Settings, label: "Settings", path: "/admin/settings" },
 ];
 
