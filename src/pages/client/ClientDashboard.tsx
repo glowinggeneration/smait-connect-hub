@@ -1,7 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProjectCard, Project } from "@/components/projects/ProjectCard";
 import { TodaySchedule } from "@/components/dashboard/TodaySchedule";
-import { NewTaskForm } from "@/components/dashboard/NewTaskForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -167,7 +166,7 @@ const ClientDashboard = () => {
             </CardContent>
           </Card>
 
-          <NewTaskForm />
+          
         </div>
       </div>
     </DashboardLayout>
