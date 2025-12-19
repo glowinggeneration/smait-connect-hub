@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -25,10 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProjectProgressSlider } from "@/components/projects/ProjectProgressSlider";
 import { Plus, Search, FolderKanban, Loader2, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow, differenceInDays, parseISO, format } from "date-fns";
+import { formatDistanceToNow, differenceInDays, parseISO } from "date-fns";
 
 interface Project {
   id: string;
@@ -65,11 +65,38 @@ const AdminProjects = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel("projects-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "projects" },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            setProjects((prev) => [payload.new as Project, ...prev]);
+          } else if (payload.eventType === "UPDATE") {
+            setProjects((prev) =>
+              prev.map((p) =>
+                p.id === payload.new.id ? (payload.new as Project) : p
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
+            setProjects((prev) =>
+              prev.filter((p) => p.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
     try {
-      // Fetch projects
       const { data: projectsData, error: projectsError } = await supabase
         .from("projects")
         .select("*")
@@ -77,7 +104,6 @@ const AdminProjects = () => {
 
       if (projectsError) throw projectsError;
 
-      // Fetch clients
       const { data: clientRoles } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -107,6 +133,58 @@ const AdminProjects = () => {
   const getClientName = (clientId: string) => {
     const client = clients.find((c) => c.user_id === clientId);
     return client?.full_name || client?.company || "Unknown Client";
+  };
+
+  const updateProjectProgress = async (projectId: string, progress: number) => {
+    try {
+      const project = projects.find((p) => p.id === projectId);
+      if (!project) return;
+
+      // Determine status based on progress
+      let status = project.status;
+      if (progress === 100) {
+        status = "completed";
+      } else if (progress > 0 && status === "not-started") {
+        status = "in-progress";
+      }
+
+      const { error } = await supabase
+        .from("projects")
+        .update({ progress, status, updated_at: new Date().toISOString() })
+        .eq("id", projectId);
+
+      if (error) throw error;
+
+      // Log activity
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activities").insert({
+          user_id: user.id,
+          project_id: projectId,
+          action: `Updated progress to ${progress}%`,
+          action_type: "update",
+        });
+
+        // Send notification to client
+        await supabase.from("notifications").insert({
+          user_id: project.client_id,
+          title: "Project Progress Updated",
+          message: `${project.name} is now ${progress}% complete`,
+          type: progress === 100 ? "success" : "info",
+        });
+      }
+
+      toast({
+        title: "Progress Updated",
+        description: `Project is now ${progress}% complete`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredProjects = projects.filter(
@@ -142,7 +220,6 @@ const AdminProjects = () => {
 
       if (error) throw error;
 
-      // Log activity
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("activities").insert({
@@ -151,9 +228,16 @@ const AdminProjects = () => {
           action: `Created new project: ${newProject.name}`,
           action_type: "create",
         });
+
+        // Notify client
+        await supabase.from("notifications").insert({
+          user_id: newProject.client_id,
+          title: "New Project Created",
+          message: `A new project "${newProject.name}" has been created for you`,
+          type: "success",
+        });
       }
 
-      setProjects([data, ...projects]);
       setNewProject({ name: "", description: "", client_id: "", due_date: "" });
       setIsDialogOpen(false);
       toast({
@@ -205,7 +289,6 @@ const AdminProjects = () => {
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Projects</h1>
@@ -313,7 +396,6 @@ const AdminProjects = () => {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
@@ -360,7 +442,6 @@ const AdminProjects = () => {
           </Card>
         </div>
 
-        {/* Projects Tabs */}
         <Tabs defaultValue="all" className="w-full">
           <TabsList>
             <TabsTrigger value="all">All ({projectsByStatus.all.length})</TabsTrigger>
@@ -376,25 +457,34 @@ const AdminProjects = () => {
                   {projectList.map((project, index) => (
                     <Card
                       key={project.id}
-                      className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all animate-fade-in"
+                      className="hover:shadow-md hover:border-primary/30 transition-all animate-fade-in"
                       style={{ animationDelay: `${index * 50}ms` }}
-                      onClick={() => navigate(`/admin/project/${project.id}`)}
                     >
                       <CardContent className="p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          {getStatusBadge(project.status)}
-                          <span className="text-sm font-bold text-primary">{project.progress}%</span>
-                        </div>
-                        <h3 className="font-semibold mb-1 line-clamp-1">{project.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {getClientName(project.client_id)}
-                        </p>
-                        {project.description && (
-                          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                            {project.description}
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => navigate(`/admin/project/${project.id}`)}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            {getStatusBadge(project.status)}
+                          </div>
+                          <h3 className="font-semibold mb-1 line-clamp-1">{project.name}</h3>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            {getClientName(project.client_id)}
                           </p>
-                        )}
-                        <Progress value={project.progress} size="sm" className="mb-3" />
+                          {project.description && (
+                            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                              {project.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <ProjectProgressSlider
+                          value={project.progress}
+                          onSave={(value) => updateProjectProgress(project.id, value)}
+                          className="mb-3"
+                        />
+
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
@@ -403,13 +493,13 @@ const AdminProjects = () => {
                           {project.due_date && (() => {
                             const daysLeft = differenceInDays(parseISO(project.due_date), new Date());
                             return (
-                              <Badge 
+                              <Badge
                                 variant={daysLeft < 0 ? "destructive" : daysLeft <= 7 ? "warning" : "secondary"}
                                 className="text-xs"
                               >
-                                {daysLeft < 0 
+                                {daysLeft < 0
                                   ? `${Math.abs(daysLeft)}d overdue`
-                                  : daysLeft === 0 
+                                  : daysLeft === 0
                                     ? "Due today"
                                     : `${daysLeft}d left`}
                               </Badge>
