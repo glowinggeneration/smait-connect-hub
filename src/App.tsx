@@ -16,6 +16,7 @@ import AdminTasks from "./pages/admin/AdminTasks";
 import AdminInbox from "./pages/admin/AdminInbox";
 import AdminStandups from "./pages/admin/AdminStandups";
 import AdminMeetings from "./pages/admin/AdminMeetings";
+import AdminBriefs from "./pages/admin/AdminBriefs";
 import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientProjects from "./pages/client/ClientProjects";
 import ClientMessages from "./pages/client/ClientMessages";
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/admin/standups" element={<AdminStandups />} />
           <Route path="/admin/meetings" element={<AdminMeetings />} />
           <Route path="/admin/projects" element={<AdminProjects />} />
+          <Route path="/admin/briefs" element={<AdminBriefs />} />
           <Route path="/admin/clients" element={<AdminClients />} />
           <Route path="/admin/messages" element={<AdminMessages />} />
           <Route path="/admin/documents" element={<AdminDocuments />} />
