@@ -22,8 +22,9 @@ interface SidebarProps {
 }
 
 const adminNavItems = [
+  { icon: LayoutDashboard, label: "Overview", path: "/admin" },
   { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
-  { icon: MessageSquare, label: "Inbox", path: "/admin", badge: null, active: true },
+  { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
   { icon: Users, label: "Clients", path: "/admin/clients" },
   { icon: Clock, label: "Standups", path: "/admin/standups" },
