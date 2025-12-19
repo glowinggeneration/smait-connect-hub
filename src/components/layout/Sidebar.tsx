@@ -43,6 +43,7 @@ const adminNavItems = [
 const clientNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/client", badge: null },
   { icon: FolderKanban, label: "My Projects", path: "/client/projects", badge: null },
+  { icon: Calendar, label: "Calendar", path: "/client/calendar", badge: null },
   { icon: MessageSquare, label: "Messages", path: "/client/messages", badge: 3 },
   { icon: Settings, label: "Settings", path: "/client/settings", badge: null },
 ];
