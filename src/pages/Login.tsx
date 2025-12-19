@@ -11,44 +11,31 @@ const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
-        if (error) throw error;
-        toast.success("Account created! Please check your email to verify.");
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+
+      // Check user role and redirect
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (roleData?.role === "admin") {
+        navigate("/admin");
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-
-        // Check user role and redirect
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .single();
-
-        if (roleData?.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/client");
-        }
+        navigate("/client");
       }
     } catch (error: any) {
       toast.error(error.message || "Authentication failed");
@@ -81,19 +68,15 @@ const Login = () => {
         <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-8 shadow-2xl">
           {/* Header */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">
-              {isSignUp ? "Sign up" : "Sign in"}
-            </h2>
+            <h2 className="text-2xl font-bold text-white mb-2">Sign in</h2>
             <div className="w-12 h-1 bg-primary rounded-full mb-4" />
             <p className="text-white/70 text-sm">
-              {isSignUp 
-                ? "Create your account to get started with Smait Workspace."
-                : "Enter your email address below and we will sign you into your workspace."}
+              Enter your email address below and we will sign you into your workspace.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleAuth} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1">
               <label className="text-white/60 text-xs uppercase tracking-wider">Your email</label>
               <div className="relative">
@@ -139,32 +122,28 @@ const Login = () => {
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 rounded-lg"
                 disabled={isLoading}
               >
-                {isLoading ? "Please wait..." : isSignUp ? "Sign up" : "Sign in"}
+                {isLoading ? "Please wait..." : "Sign in"}
               </Button>
             </div>
           </form>
 
           {/* Forgot password */}
-          {!isSignUp && (
-            <div className="text-center mt-6">
-              <button type="button" className="text-sm text-white/50 hover:text-white/70 transition-colors">
-                Forgot password?
-              </button>
-            </div>
-          )}
+          <div className="text-center mt-6">
+            <button type="button" className="text-sm text-white/50 hover:text-white/70 transition-colors">
+              Forgot password?
+            </button>
+          </div>
         </div>
 
         {/* Bottom text */}
         <p className="text-center text-sm text-white/60 mt-6">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          Contact the admin of this space or{" "}
-          <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
+          Don't have an account? Contact the admin of this space.{" "}
+          <a
+            href="https://www.smait.co.za"
             className="font-semibold text-white hover:underline transition-colors"
           >
-            {isSignUp ? "Sign in" : "create your own"}
-          </button>
+            Contact us
+          </a>
         </p>
       </div>
     </div>
