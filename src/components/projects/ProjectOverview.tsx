@@ -1,10 +1,12 @@
+import { useEffect, useState } from "react";
 import { Project, ProjectPhase } from "@/types/project";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow, format, parseISO } from "date-fns";
 import {
   ArrowLeft,
   Calendar,
@@ -30,13 +32,6 @@ interface TeamMember {
   avatar?: string;
 }
 
-interface Milestone {
-  id: string;
-  title: string;
-  dueDate: string;
-  status: "completed" | "in-progress" | "upcoming" | "overdue";
-}
-
 interface Activity {
   id: string;
   user: string;
@@ -55,29 +50,6 @@ interface ProjectOverviewProps {
   onViewDeliverables?: () => void;
 }
 
-// Mock data - in a real app, this would come from the database
-const mockTeam: TeamMember[] = [
-  { id: "1", name: "Sarah Chen", role: "Project Lead" },
-  { id: "2", name: "Mike Johnson", role: "Senior Designer" },
-  { id: "3", name: "Emma Wilson", role: "Developer" },
-];
-
-const mockMilestones: Milestone[] = [
-  { id: "1", title: "Discovery Complete", dueDate: "2024-01-20", status: "completed" },
-  { id: "2", title: "Design Approval", dueDate: "2024-02-05", status: "completed" },
-  { id: "3", title: "Development Sprint 1", dueDate: "2024-02-25", status: "in-progress" },
-  { id: "4", title: "User Testing", dueDate: "2024-03-10", status: "upcoming" },
-  { id: "5", title: "Final Delivery", dueDate: "2024-03-25", status: "upcoming" },
-];
-
-const mockActivities: Activity[] = [
-  { id: "1", user: "Sarah Chen", action: "Updated phase progress to 65%", timestamp: "2 hours ago", type: "update" },
-  { id: "2", user: "Mike Johnson", action: "Uploaded new design mockups", timestamp: "5 hours ago", type: "upload" },
-  { id: "3", user: "Client", action: "Approved wireframes for homepage", timestamp: "1 day ago", type: "milestone" },
-  { id: "4", user: "Emma Wilson", action: "Completed responsive layout implementation", timestamp: "2 days ago", type: "update" },
-  { id: "5", user: "Sarah Chen", action: "Added comment on design review", timestamp: "3 days ago", type: "comment" },
-];
-
 export const ProjectOverview = ({
   project,
   isAdmin,
@@ -87,14 +59,70 @@ export const ProjectOverview = ({
   onUploadBrief,
   onViewDeliverables,
 }: ProjectOverviewProps) => {
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    fetchTeam();
+    fetchActivities();
+    fetchUnreadMessages();
+  }, [project.id]);
+
+  const fetchTeam = async () => {
+    const { data, error } = await supabase
+      .from("project_team")
+      .select("id, role, user_id, profiles:user_id(full_name, avatar_url)")
+      .eq("project_id", project.id);
+
+    if (!error && data) {
+      const teamMembers: TeamMember[] = data.map((member: any) => ({
+        id: member.id,
+        name: member.profiles?.full_name || "Unknown",
+        role: member.role || "Team Member",
+        avatar: member.profiles?.avatar_url,
+      }));
+      setTeam(teamMembers);
+    }
+  };
+
+  const fetchActivities = async () => {
+    const { data, error } = await supabase
+      .from("activities")
+      .select("id, action, action_type, created_at, user_id, profiles:user_id(full_name)")
+      .eq("project_id", project.id)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (!error && data) {
+      const formattedActivities: Activity[] = data.map((activity: any) => ({
+        id: activity.id,
+        user: activity.profiles?.full_name || "Team Member",
+        action: activity.action,
+        timestamp: formatDistanceToNow(new Date(activity.created_at), { addSuffix: true }),
+        type: activity.action_type as Activity["type"] || "update",
+      }));
+      setActivities(formattedActivities);
+    }
+  };
+
+  const fetchUnreadMessages = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { count } = await supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("receiver_id", user.id)
+      .eq("read", false);
+
+    setUnreadMessages(count || 0);
+  };
+
   const overallProgress = Math.round(
     project.phases.reduce((acc, phase) => acc + phase.progress, 0) /
       project.phases.length
   );
-
-  const completedPhases = project.phases.filter(
-    (p) => p.status === "completed"
-  ).length;
 
   const currentPhase = project.phases.find(
     (p) => p.order === project.currentPhase
@@ -110,19 +138,6 @@ export const ProjectOverview = ({
         return <AlertCircle className="w-4 h-4 text-destructive" />;
       default:
         return <Circle className="w-4 h-4 text-muted-foreground" />;
-    }
-  };
-
-  const getMilestoneStatusColor = (status: Milestone["status"]) => {
-    switch (status) {
-      case "completed":
-        return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
-      case "in-progress":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "overdue":
-        return "bg-destructive/10 text-destructive border-destructive/20";
-      default:
-        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -185,30 +200,33 @@ export const ProjectOverview = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
-                Started {new Date(project.createdAt).toLocaleDateString()}
+                Started {format(parseISO(project.createdAt), "MMM d, yyyy")}
               </div>
             </div>
 
             {/* Team Members */}
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <Users className="w-4 h-4" />
-                SMAIT Team:
-              </span>
-              <div className="flex -space-x-2">
-                {mockTeam.map((member) => (
-                  <Avatar key={member.id} className="w-8 h-8 border-2 border-background">
-                    <AvatarImage src={member.avatar} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                      {getInitials(member.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
+            {team.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <Users className="w-4 h-4" />
+                  Team:
+                </span>
+                <div className="flex -space-x-2">
+                  {team.slice(0, 4).map((member) => (
+                    <Avatar key={member.id} className="w-8 h-8 border-2 border-background">
+                      <AvatarImage src={member.avatar} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {getInitials(member.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {team.slice(0, 3).map(m => m.name).join(", ")}
+                  {team.length > 3 && ` +${team.length - 3} more`}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground">
-                {mockTeam.map(m => m.name).join(", ")}
-              </span>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -258,7 +276,7 @@ export const ProjectOverview = ({
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Summary & Milestones */}
+        {/* Left Column - Summary & Phases Overview */}
         <div className="lg:col-span-2 space-y-6">
           {/* Project Summary */}
           <Card>
@@ -270,78 +288,37 @@ export const ProjectOverview = ({
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Objectives</h4>
-                <p className="text-sm">{project.description}</p>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Description</h4>
+                <p className="text-sm">{project.description || "No description provided."}</p>
               </div>
-              <Separator />
+              
+              {/* Phase Status Overview */}
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Scope</h4>
-                <ul className="text-sm space-y-1">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    Complete UI/UX redesign
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    Responsive implementation
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Circle className="w-4 h-4 text-muted-foreground" />
-                    Performance optimization
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Circle className="w-4 h-4 text-muted-foreground" />
-                    User testing & feedback
-                  </li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Key Milestones */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                Key Milestones
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {mockMilestones.map((milestone) => (
-                  <div
-                    key={milestone.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      {milestone.status === "completed" ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      ) : milestone.status === "in-progress" ? (
-                        <PlayCircle className="w-5 h-5 text-primary" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-muted-foreground" />
-                      )}
-                      <span className={cn(
-                        "text-sm font-medium",
-                        milestone.status === "completed" && "line-through text-muted-foreground"
-                      )}>
-                        {milestone.title}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(milestone.dueDate).toLocaleDateString()}
-                      </span>
+                <h4 className="text-sm font-medium text-muted-foreground mb-3">Phase Status</h4>
+                <div className="space-y-2">
+                  {project.phases.map((phase, index) => (
+                    <div key={phase.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        {getPhaseStatusIcon(phase)}
+                        <span className="text-sm">{phase.name}</span>
+                      </div>
                       <Badge 
                         variant="outline" 
-                        className={cn("text-xs", getMilestoneStatusColor(milestone.status))}
+                        className={cn(
+                          "text-xs",
+                          phase.status === "completed" && "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+                          phase.status === "in-progress" && "bg-primary/10 text-primary border-primary/20",
+                          phase.status === "blocked" && "bg-destructive/10 text-destructive border-destructive/20",
+                          phase.status === "not-started" && "bg-muted text-muted-foreground border-border"
+                        )}
                       >
-                        {milestone.status === "in-progress" ? "In Progress" : 
-                         milestone.status.charAt(0).toUpperCase() + milestone.status.slice(1)}
+                        {phase.status === "in-progress" ? "In Progress" : 
+                         phase.status === "not-started" ? "Not Started" :
+                         phase.status.charAt(0).toUpperCase() + phase.status.slice(1)}
                       </Badge>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -386,7 +363,9 @@ export const ProjectOverview = ({
                   <MessageSquare className="w-4 h-4" />
                   Project Chat
                 </span>
-                <Badge className="bg-primary/10 text-primary text-xs">3 new</Badge>
+                {unreadMessages > 0 && (
+                  <Badge className="bg-primary/10 text-primary text-xs">{unreadMessages} new</Badge>
+                )}
               </Button>
               <Button
                 variant="gradient"
@@ -407,22 +386,28 @@ export const ProjectOverview = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockActivities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      {getActivityIcon(activity.type)}
+              {activities.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No activity yet for this project.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {activities.map((activity) => (
+                    <div key={activity.id} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm">
+                          <span className="font-medium">{activity.user}</span>{" "}
+                          <span className="text-muted-foreground">{activity.action}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">
-                        <span className="font-medium">{activity.user}</span>{" "}
-                        <span className="text-muted-foreground">{activity.action}</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
