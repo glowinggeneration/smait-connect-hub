@@ -25,6 +25,7 @@ const adminNavItems = [
   { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
   { icon: MessageSquare, label: "Inbox", path: "/admin", badge: null, active: true },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
+  { icon: Users, label: "Clients", path: "/admin/clients" },
   { icon: Clock, label: "Standups", path: "/admin/standups" },
   { icon: Calendar, label: "Meetings", path: "/admin/meetings", badge: 5 },
   { icon: Settings, label: "Settings", path: "/admin/settings" },
