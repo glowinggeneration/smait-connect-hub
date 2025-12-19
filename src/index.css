@@ -147,6 +147,69 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Animated gradient backgrounds */
+  .animate-gradient {
+    animation: gradient-shift 8s ease infinite;
+    background-size: 200% 200%;
+  }
+  
+  .animate-gradient-reverse {
+    animation: gradient-shift-reverse 10s ease infinite;
+    background-size: 200% 200%;
+  }
+  
+  .animate-gradient-slow {
+    animation: gradient-shift 15s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-float-delayed {
+    animation: float 8s ease-in-out infinite;
+    animation-delay: -2s;
+  }
+  
+  .animate-float-slow {
+    animation: float 10s ease-in-out infinite;
+    animation-delay: -4s;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes gradient-shift-reverse {
+  0%, 100% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 0% 100%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  50% {
+    transform: translateY(0) translateX(20px);
+  }
+  75% {
+    transform: translateY(20px) translateX(10px);
+  }
 }
 
 /* Custom scrollbar */
