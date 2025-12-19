@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Calendar, Clock, Flag, CheckCircle2, Circle, MoreHorizontal, Trash2 } from "lucide-react";
+import { Plus, Search, Calendar, Clock, Flag, CheckCircle2, Circle, MoreHorizontal, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -32,150 +32,185 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Task {
   id: string;
   title: string;
   description: string;
   priority: "low" | "medium" | "high";
-  status: "todo" | "in-progress" | "completed";
-  dueDate: string;
-  category: "daily" | "weekly" | "monthly";
+  status: "pending" | "in-progress" | "completed";
+  dueDate: string | null;
   createdAt: string;
 }
 
-const initialTasks: Task[] = [
-  {
-    id: "1",
-    title: "Review Q4 Financial Reports",
-    description: "Analyze quarterly financial performance and prepare summary",
-    priority: "high",
-    status: "in-progress",
-    dueDate: "2024-12-20",
-    category: "monthly",
-    createdAt: "2024-12-01",
-  },
-  {
-    id: "2",
-    title: "Client Onboarding - TechCorp",
-    description: "Complete onboarding documentation for new client",
-    priority: "high",
-    status: "todo",
-    dueDate: "2024-12-18",
-    category: "weekly",
-    createdAt: "2024-12-15",
-  },
-  {
-    id: "3",
-    title: "Update Project Timeline",
-    description: "Adjust milestones based on client feedback",
-    priority: "medium",
-    status: "todo",
-    dueDate: "2024-12-19",
-    category: "daily",
-    createdAt: "2024-12-17",
-  },
-  {
-    id: "4",
-    title: "Team Performance Reviews",
-    description: "Complete monthly performance assessments",
-    priority: "medium",
-    status: "todo",
-    dueDate: "2024-12-25",
-    category: "monthly",
-    createdAt: "2024-12-01",
-  },
-  {
-    id: "5",
-    title: "Prepare Monthly Newsletter",
-    description: "Draft and send client newsletter",
-    priority: "low",
-    status: "completed",
-    dueDate: "2024-12-15",
-    category: "monthly",
-    createdAt: "2024-12-01",
-  },
-];
-
 const AdminTasks = () => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
     priority: "medium" as Task["priority"],
-    category: "monthly" as Task["category"],
     dueDate: "",
   });
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const mappedTasks: Task[] = (data || []).map((t) => ({
+        id: t.id,
+        title: t.title,
+        description: t.description || "",
+        priority: t.priority as Task["priority"],
+        status: t.status as Task["status"],
+        dueDate: t.due_date,
+        createdAt: t.created_at,
+      }));
+
+      setTasks(mappedTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load tasks.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const tasksByCategory = {
-    all: filteredTasks,
-    daily: filteredTasks.filter((t) => t.category === "daily"),
-    weekly: filteredTasks.filter((t) => t.category === "weekly"),
-    monthly: filteredTasks.filter((t) => t.category === "monthly"),
-  };
-
-  const handleCreateTask = () => {
-    if (!newTask.title || !newTask.dueDate) {
+  const handleCreateTask = async () => {
+    if (!newTask.title) {
       toast({
         title: "Missing Information",
-        description: "Please fill in title and due date.",
+        description: "Please fill in the title.",
         variant: "destructive",
       });
       return;
     }
 
-    const task: Task = {
-      id: `task-${Date.now()}`,
-      title: newTask.title,
-      description: newTask.description,
-      priority: newTask.priority,
-      status: "todo",
-      dueDate: newTask.dueDate,
-      category: newTask.category,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    setTasks([task, ...tasks]);
-    setNewTask({ title: "", description: "", priority: "medium", category: "monthly", dueDate: "" });
-    setIsDialogOpen(false);
-    toast({
-      title: "Task Created",
-      description: `${task.title} has been added to your ${task.category} tasks.`,
-    });
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert({
+          title: newTask.title,
+          description: newTask.description || null,
+          priority: newTask.priority,
+          status: "pending",
+          due_date: newTask.dueDate || null,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const mappedTask: Task = {
+        id: data.id,
+        title: data.title,
+        description: data.description || "",
+        priority: data.priority as Task["priority"],
+        status: data.status as Task["status"],
+        dueDate: data.due_date,
+        createdAt: data.created_at,
+      };
+
+      setTasks([mappedTask, ...tasks]);
+      setNewTask({ title: "", description: "", priority: "medium", dueDate: "" });
+      setIsDialogOpen(false);
+      toast({
+        title: "Task Created",
+        description: `${data.title} has been added to your tasks.`,
+      });
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create task.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleTaskStatus = (taskId: string) => {
-    setTasks(tasks.map((task) => {
-      if (task.id === taskId) {
-        const newStatus = task.status === "completed" ? "todo" : "completed";
-        return { ...task, status: newStatus };
-      }
-      return task;
-    }));
+  const toggleTaskStatus = async (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const newStatus = task.status === "completed" ? "pending" : "completed";
+
+    // Optimistic update
+    setTasks(tasks.map((t) =>
+      t.id === taskId ? { ...t, status: newStatus } : t
+    ));
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: newStatus })
+        .eq("id", taskId);
+
+      if (error) throw error;
+    } catch (error) {
+      // Revert on error
+      setTasks(tasks.map((t) =>
+        t.id === taskId ? { ...t, status: task.status } : t
+      ));
+      console.error("Error updating task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteTask = (taskId: string) => {
+  const deleteTask = async (taskId: string) => {
+    const originalTasks = [...tasks];
     setTasks(tasks.filter((t) => t.id !== taskId));
-    toast({
-      title: "Task Deleted",
-      description: "The task has been removed.",
-    });
-  };
 
-  const getPriorityColor = (priority: Task["priority"]) => {
-    switch (priority) {
-      case "high":
-        return "text-red-500";
-      case "medium":
-        return "text-amber-500";
-      case "low":
-        return "text-emerald-500";
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Task Deleted",
+        description: "The task has been removed.",
+      });
+    } catch (error) {
+      setTasks(originalTasks);
+      console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -188,6 +223,13 @@ const AdminTasks = () => {
       case "low":
         return "bg-emerald-500/10 text-emerald-500";
     }
+  };
+
+  const tasksByStatus = {
+    all: filteredTasks,
+    pending: filteredTasks.filter((t) => t.status === "pending"),
+    inProgress: filteredTasks.filter((t) => t.status === "in-progress"),
+    completed: filteredTasks.filter((t) => t.status === "completed"),
   };
 
   const TaskCard = ({ task }: { task: Task }) => (
@@ -213,15 +255,14 @@ const AdminTasks = () => {
                 {task.description}
               </p>
             )}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {new Date(task.dueDate).toLocaleDateString()}
+            {task.dueDate && (
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(task.dueDate).toLocaleDateString()}
+                </div>
               </div>
-              <Badge variant="outline" className="text-xs">
-                {task.category}
-              </Badge>
-            </div>
+            )}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -244,6 +285,16 @@ const AdminTasks = () => {
     </Card>
   );
 
+  if (isLoading) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
@@ -252,7 +303,7 @@ const AdminTasks = () => {
           <div>
             <h1 className="text-2xl font-bold">My Tasks</h1>
             <p className="text-muted-foreground">
-              Manage your daily, weekly, and monthly tasks
+              Manage your tasks and track progress
             </p>
           </div>
 
@@ -278,7 +329,7 @@ const AdminTasks = () => {
                 <DialogHeader>
                   <DialogTitle>Create New Task</DialogTitle>
                   <DialogDescription>
-                    Add a new task to your list. Choose the category and priority.
+                    Add a new task to your list.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -300,46 +351,26 @@ const AdminTasks = () => {
                       onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Category</Label>
-                      <Select
-                        value={newTask.category}
-                        onValueChange={(value: Task["category"]) =>
-                          setNewTask({ ...newTask, category: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Priority</Label>
-                      <Select
-                        value={newTask.priority}
-                        onValueChange={(value: Task["priority"]) =>
-                          setNewTask({ ...newTask, priority: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Priority</Label>
+                    <Select
+                      value={newTask.priority}
+                      onValueChange={(value: Task["priority"]) =>
+                        setNewTask({ ...newTask, priority: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="dueDate">Due Date *</Label>
+                    <Label htmlFor="dueDate">Due Date</Label>
                     <Input
                       id="dueDate"
                       type="date"
@@ -369,7 +400,7 @@ const AdminTasks = () => {
                 <Circle className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tasks.filter((t) => t.status === "todo").length}</p>
+                <p className="text-2xl font-bold">{tasksByStatus.pending.length}</p>
                 <p className="text-xs text-muted-foreground">To Do</p>
               </div>
             </CardContent>
@@ -380,7 +411,7 @@ const AdminTasks = () => {
                 <Clock className="w-5 h-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tasks.filter((t) => t.status === "in-progress").length}</p>
+                <p className="text-2xl font-bold">{tasksByStatus.inProgress.length}</p>
                 <p className="text-xs text-muted-foreground">In Progress</p>
               </div>
             </CardContent>
@@ -391,7 +422,7 @@ const AdminTasks = () => {
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tasks.filter((t) => t.status === "completed").length}</p>
+                <p className="text-2xl font-bold">{tasksByStatus.completed.length}</p>
                 <p className="text-xs text-muted-foreground">Completed</p>
               </div>
             </CardContent>
@@ -409,16 +440,16 @@ const AdminTasks = () => {
           </Card>
         </div>
 
-        {/* Tasks by Category */}
+        {/* Tasks by Status */}
         <Tabs defaultValue="all" className="w-full">
           <TabsList>
-            <TabsTrigger value="all">All ({tasksByCategory.all.length})</TabsTrigger>
-            <TabsTrigger value="daily">Daily ({tasksByCategory.daily.length})</TabsTrigger>
-            <TabsTrigger value="weekly">Weekly ({tasksByCategory.weekly.length})</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly ({tasksByCategory.monthly.length})</TabsTrigger>
+            <TabsTrigger value="all">All ({tasksByStatus.all.length})</TabsTrigger>
+            <TabsTrigger value="pending">To Do ({tasksByStatus.pending.length})</TabsTrigger>
+            <TabsTrigger value="inProgress">In Progress ({tasksByStatus.inProgress.length})</TabsTrigger>
+            <TabsTrigger value="completed">Completed ({tasksByStatus.completed.length})</TabsTrigger>
           </TabsList>
 
-          {Object.entries(tasksByCategory).map(([key, taskList]) => (
+          {Object.entries(tasksByStatus).map(([key, taskList]) => (
             <TabsContent key={key} value={key} className="mt-6">
               {taskList.length > 0 ? (
                 <div className="space-y-3">
