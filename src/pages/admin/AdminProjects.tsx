@@ -28,7 +28,7 @@ import {
 import { Plus, Search, FolderKanban, Loader2, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInDays, parseISO, format } from "date-fns";
 
 interface Project {
   id: string;
@@ -400,9 +400,21 @@ const AdminProjects = () => {
                             <Calendar className="w-3 h-3" />
                             {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
                           </span>
-                          {project.due_date && (
-                            <span>Due: {new Date(project.due_date).toLocaleDateString()}</span>
-                          )}
+                          {project.due_date && (() => {
+                            const daysLeft = differenceInDays(parseISO(project.due_date), new Date());
+                            return (
+                              <Badge 
+                                variant={daysLeft < 0 ? "destructive" : daysLeft <= 7 ? "warning" : "secondary"}
+                                className="text-xs"
+                              >
+                                {daysLeft < 0 
+                                  ? `${Math.abs(daysLeft)}d overdue`
+                                  : daysLeft === 0 
+                                    ? "Due today"
+                                    : `${daysLeft}d left`}
+                              </Badge>
+                            );
+                          })()}
                         </div>
                       </CardContent>
                     </Card>

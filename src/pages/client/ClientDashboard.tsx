@@ -23,6 +23,7 @@ const mockProjects: Project[] = [
     status: "in-progress",
     progress: 65,
     lastUpdated: "2 hours ago",
+    dueDate: "2025-01-15",
   },
   {
     id: "2",
@@ -31,6 +32,7 @@ const mockProjects: Project[] = [
     status: "review",
     progress: 90,
     lastUpdated: "1 day ago",
+    dueDate: "2025-01-05",
   },
 ];
 

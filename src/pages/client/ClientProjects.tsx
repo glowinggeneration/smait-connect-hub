@@ -5,16 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { FolderKanban } from "lucide-react";
 
-interface SimpleProject {
-  id: string;
-  name: string;
-  description: string;
-  status: "pending" | "in-progress" | "review" | "completed";
-  progress: number;
-  lastUpdated: string;
-}
+import { Project } from "@/components/projects/ProjectCard";
 
-const mockProjects: SimpleProject[] = [
+const mockProjects: Project[] = [
   {
     id: "1",
     name: "E-commerce Platform Redesign",
@@ -22,6 +15,7 @@ const mockProjects: SimpleProject[] = [
     status: "in-progress",
     progress: 65,
     lastUpdated: "2 hours ago",
+    dueDate: "2025-01-15",
   },
   {
     id: "2",
@@ -30,6 +24,7 @@ const mockProjects: SimpleProject[] = [
     status: "review",
     progress: 90,
     lastUpdated: "1 day ago",
+    dueDate: "2025-01-05",
   },
 ];
 
