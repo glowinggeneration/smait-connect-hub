@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Calendar, Clock, Flag, CheckCircle2, Circle, MoreHorizontal, Trash2, Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Plus, Search, Calendar, Clock, Flag, CheckCircle2, Circle, MoreHorizontal, Trash2, Loader2, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -42,10 +43,19 @@ interface Task {
   status: "pending" | "in-progress" | "completed";
   dueDate: string | null;
   createdAt: string;
+  assignedTo: string | null;
+  assignedToName: string | null;
+}
+
+interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
 }
 
 const AdminTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +64,41 @@ const AdminTasks = () => {
     description: "",
     priority: "medium" as Task["priority"],
     dueDate: "",
+    assignedTo: "",
   });
+
+  const fetchAdminUsers = useCallback(async () => {
+    try {
+      // Get all users with admin role
+      const { data: adminRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
+
+      if (rolesError) throw rolesError;
+
+      if (adminRoles && adminRoles.length > 0) {
+        const userIds = adminRoles.map(r => r.user_id);
+        
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .in("user_id", userIds);
+
+        if (profilesError) throw profilesError;
+
+        const admins: AdminUser[] = (profiles || []).map(p => ({
+          id: p.user_id,
+          name: p.full_name,
+          email: p.email,
+        }));
+        
+        setAdminUsers(admins);
+      }
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+    }
+  }, []);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -63,12 +107,15 @@ const AdminTasks = () => {
 
       const { data, error } = await supabase
         .from("tasks")
-        .select("*")
+        .select(`
+          *,
+          profiles:assigned_to(full_name)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const mappedTasks: Task[] = (data || []).map((t) => ({
+      const mappedTasks: Task[] = (data || []).map((t: any) => ({
         id: t.id,
         title: t.title,
         description: t.description || "",
@@ -76,6 +123,8 @@ const AdminTasks = () => {
         status: t.status as Task["status"],
         dueDate: t.due_date,
         createdAt: t.created_at,
+        assignedTo: t.assigned_to,
+        assignedToName: t.profiles?.full_name || null,
       }));
 
       setTasks(mappedTasks);
@@ -93,7 +142,8 @@ const AdminTasks = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks]);
+    fetchAdminUsers();
+  }, [fetchTasks, fetchAdminUsers]);
 
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -122,8 +172,12 @@ const AdminTasks = () => {
           status: "pending",
           due_date: newTask.dueDate || null,
           created_by: user.id,
+          assigned_to: newTask.assignedTo || null,
         })
-        .select()
+        .select(`
+          *,
+          profiles:assigned_to(full_name)
+        `)
         .single();
 
       if (error) throw error;
@@ -136,14 +190,16 @@ const AdminTasks = () => {
         status: data.status as Task["status"],
         dueDate: data.due_date,
         createdAt: data.created_at,
+        assignedTo: data.assigned_to,
+        assignedToName: (data as any).profiles?.full_name || null,
       };
 
       setTasks([mappedTask, ...tasks]);
-      setNewTask({ title: "", description: "", priority: "medium", dueDate: "" });
+      setNewTask({ title: "", description: "", priority: "medium", dueDate: "", assignedTo: "" });
       setIsDialogOpen(false);
       toast({
         title: "Task Created",
-        description: `${data.title} has been added to your tasks.`,
+        description: `${data.title} has been added.`,
       });
     } catch (error) {
       console.error("Error creating task:", error);
@@ -161,7 +217,6 @@ const AdminTasks = () => {
 
     const newStatus = task.status === "completed" ? "pending" : "completed";
 
-    // Optimistic update
     setTasks(tasks.map((t) =>
       t.id === taskId ? { ...t, status: newStatus } : t
     ));
@@ -174,7 +229,6 @@ const AdminTasks = () => {
 
       if (error) throw error;
     } catch (error) {
-      // Revert on error
       setTasks(tasks.map((t) =>
         t.id === taskId ? { ...t, status: task.status } : t
       ));
@@ -214,6 +268,15 @@ const AdminTasks = () => {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const getPriorityBadge = (priority: Task["priority"]) => {
     switch (priority) {
       case "high":
@@ -242,7 +305,7 @@ const AdminTasks = () => {
             className="mt-1"
           />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
                 {task.title}
               </h3>
@@ -255,14 +318,24 @@ const AdminTasks = () => {
                 {task.description}
               </p>
             )}
-            {task.dueDate && (
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+              {task.dueDate && (
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {new Date(task.dueDate).toLocaleDateString()}
                 </div>
-              </div>
-            )}
+              )}
+              {task.assignedToName && (
+                <div className="flex items-center gap-1.5">
+                  <Avatar className="w-4 h-4">
+                    <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                      {getInitials(task.assignedToName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>{task.assignedToName}</span>
+                </div>
+              )}
+            </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -301,9 +374,9 @@ const AdminTasks = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">My Tasks</h1>
+            <h1 className="text-2xl font-bold">Tasks</h1>
             <p className="text-muted-foreground">
-              Manage your tasks and track progress
+              Manage and assign tasks to team members
             </p>
           </div>
 
@@ -329,7 +402,7 @@ const AdminTasks = () => {
                 <DialogHeader>
                   <DialogTitle>Create New Task</DialogTitle>
                   <DialogDescription>
-                    Add a new task to your list.
+                    Add a new task and assign it to a team member.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -351,32 +424,61 @@ const AdminTasks = () => {
                       onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Priority</Label>
+                      <Select
+                        value={newTask.priority}
+                        onValueChange={(value: Task["priority"]) =>
+                          setNewTask({ ...newTask, priority: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dueDate">Due Date</Label>
+                      <Input
+                        id="dueDate"
+                        type="date"
+                        value={newTask.dueDate}
+                        onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
-                    <Label>Priority</Label>
+                    <Label>Assign To</Label>
                     <Select
-                      value={newTask.priority}
-                      onValueChange={(value: Task["priority"]) =>
-                        setNewTask({ ...newTask, priority: value })
+                      value={newTask.assignedTo}
+                      onValueChange={(value) =>
+                        setNewTask({ ...newTask, assignedTo: value })
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select team member" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
+                        {adminUsers.map((admin) => (
+                          <SelectItem key={admin.id} value={admin.id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="w-5 h-5">
+                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                  {getInitials(admin.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{admin.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dueDate">Due Date</Label>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      value={newTask.dueDate}
-                      onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                    />
                   </div>
                 </div>
                 <DialogFooter>
