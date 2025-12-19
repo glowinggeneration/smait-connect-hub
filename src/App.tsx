@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProjects from "./pages/admin/AdminProjects";
@@ -29,44 +30,44 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/tasks" element={<AdminTasks />} />
-          <Route path="/admin/inbox" element={<AdminInbox />} />
-          <Route path="/admin/standups" element={<AdminStandups />} />
-          <Route path="/admin/meetings" element={<AdminMeetings />} />
-          <Route path="/admin/projects" element={<AdminProjects />} />
-          <Route path="/admin/briefs" element={<AdminBriefs />} />
-          <Route path="/admin/clients" element={<AdminClients />} />
-          <Route path="/admin/messages" element={<AdminMessages />} />
-          <Route path="/admin/documents" element={<AdminDocuments />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/project/:id" element={<AdminProjectDetail />} />
-          <Route path="/admin/client/:clientId" element={<AdminClientDetail />} />
-          <Route path="/admin/project/:id" element={<AdminProjectDetail />} />
-          <Route path="/admin/client/:clientId" element={<AdminClientDetail />} />
-          {/* Client Routes */}
-          <Route path="/client" element={<ClientDashboard />} />
-          <Route path="/client/projects" element={<ClientProjects />} />
-          <Route path="/client/messages" element={<ClientMessages />} />
-          <Route path="/client/calendar" element={<ClientCalendar />} />
-          <Route path="/client/new-brief" element={<ClientNewBrief />} />
-          <Route path="/client/notifications" element={<ClientNotifications />} />
-          <Route path="/client/settings" element={<AdminSettings />} />
-          <Route path="/client/project/:id" element={<ClientProjectDetail />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/tasks" element={<AdminTasks />} />
+            <Route path="/admin/inbox" element={<AdminInbox />} />
+            <Route path="/admin/standups" element={<AdminStandups />} />
+            <Route path="/admin/meetings" element={<AdminMeetings />} />
+            <Route path="/admin/projects" element={<AdminProjects />} />
+            <Route path="/admin/briefs" element={<AdminBriefs />} />
+            <Route path="/admin/clients" element={<AdminClients />} />
+            <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route path="/admin/documents" element={<AdminDocuments />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/project/:id" element={<AdminProjectDetail />} />
+            <Route path="/admin/client/:clientId" element={<AdminClientDetail />} />
+            {/* Client Routes */}
+            <Route path="/client" element={<ClientDashboard />} />
+            <Route path="/client/projects" element={<ClientProjects />} />
+            <Route path="/client/messages" element={<ClientMessages />} />
+            <Route path="/client/calendar" element={<ClientCalendar />} />
+            <Route path="/client/new-brief" element={<ClientNewBrief />} />
+            <Route path="/client/notifications" element={<ClientNotifications />} />
+            <Route path="/client/settings" element={<AdminSettings />} />
+            <Route path="/client/project/:id" element={<ClientProjectDetail />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
