@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import loginBackground from "@/assets/login-background.jpg";
@@ -45,42 +45,42 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden safe-area-top safe-area-bottom">
       {/* Full screen background image with animation */}
       <div 
         className="absolute inset-[-20%] bg-cover bg-center bg-no-repeat animate-bg-pan"
         style={{ backgroundImage: `url(${loginBackground})` }}
       />
       {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* Back to home arrow */}
       <a 
         href="https://www.smait.co.za" 
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/70 hover:text-white transition-colors group"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 flex items-center gap-2 text-white/70 hover:text-white transition-colors group touch-target"
       >
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span className="text-sm font-medium">Back to Home</span>
+        <span className="text-sm font-medium hidden sm:inline">Back to Home</span>
       </a>
 
       {/* Glassmorphism Login Card */}
-      <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-8 shadow-2xl">
+      <div className="relative z-10 w-full max-w-md mx-4 px-1">
+        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl">
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Sign in</h2>
-            <div className="w-12 h-1 bg-primary rounded-full mb-4" />
+          <div className="mb-6 sm:mb-8 text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back</h1>
+            <div className="w-12 h-1 bg-primary rounded-full mb-4 mx-auto sm:mx-0" />
             <p className="text-white/70 text-sm">
-              Enter your email address below and we will sign you into your workspace.
+              Sign in to access your portal
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-1">
-              <label className="text-white/60 text-xs uppercase tracking-wider">Your email</label>
+          <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-white/60 text-xs uppercase tracking-wider font-medium">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                 <Input
                   id="email"
                   type="email"
@@ -88,15 +88,16 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 pl-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary rounded-lg"
+                  autoComplete="email"
+                  className="h-12 sm:h-13 pl-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary rounded-xl text-base"
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-white/60 text-xs uppercase tracking-wider">Password</label>
+            <div className="space-y-1.5">
+              <label className="text-white/60 text-xs uppercase tracking-wider font-medium">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -104,40 +105,46 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 pl-11 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary rounded-lg"
+                  autoComplete="current-password"
+                  className="h-12 sm:h-13 pl-11 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary rounded-xl text-base"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors p-1"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-end">
-              <Button
-                type="submit"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 rounded-lg"
-                disabled={isLoading}
-              >
-                {isLoading ? "Please wait..." : "Sign in"}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              className="w-full h-12 sm:h-13 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl text-base mt-2"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </Button>
           </form>
 
           {/* Forgot password */}
-          <div className="text-center mt-6">
-            <button type="button" className="text-sm text-white/50 hover:text-white/70 transition-colors">
+          <div className="text-center mt-5">
+            <button type="button" className="text-sm text-white/50 hover:text-white/70 transition-colors py-2">
               Forgot password?
             </button>
           </div>
         </div>
 
         {/* Bottom text */}
-        <p className="text-center text-sm text-white/60 mt-6">
-          Don't have an account? Contact the admin of this space.{" "}
+        <p className="text-center text-sm text-white/60 mt-6 px-4">
+          Don't have an account?{" "}
           <a
             href="https://www.smait.co.za"
             className="font-semibold text-white hover:underline transition-colors"
