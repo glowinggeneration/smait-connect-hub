@@ -16,12 +16,10 @@ import {
   Target,
   MessageSquare,
   FileUp,
-  FolderOpen,
   CheckCircle2,
   Circle,
   AlertCircle,
   PlayCircle,
-  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,29 +42,19 @@ interface ProjectOverviewProps {
   project: Project;
   isAdmin: boolean;
   onBack?: () => void;
-  onViewPhases?: () => void;
-  onOpenChat?: () => void;
-  onUploadBrief?: () => void;
-  onViewDeliverables?: () => void;
 }
 
 export const ProjectOverview = ({
   project,
   isAdmin,
   onBack,
-  onViewPhases,
-  onOpenChat,
-  onUploadBrief,
-  onViewDeliverables,
 }: ProjectOverviewProps) => {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     fetchTeam();
     fetchActivities();
-    fetchUnreadMessages();
   }, [project.id]);
 
   const fetchTeam = async () => {
@@ -104,19 +92,6 @@ export const ProjectOverview = ({
       }));
       setActivities(formattedActivities);
     }
-  };
-
-  const fetchUnreadMessages = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { count } = await supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("receiver_id", user.id)
-      .eq("read", false);
-
-    setUnreadMessages(count || 0);
   };
 
   const overallProgress = Math.round(
@@ -252,13 +227,12 @@ export const ProjectOverview = ({
               <div
                 key={phase.id}
                 className={cn(
-                  "relative p-3 rounded-lg border transition-all cursor-pointer hover:shadow-md",
+                  "relative p-3 rounded-lg border transition-all",
                   phase.status === "completed" && "bg-emerald-500/5 border-emerald-500/30",
                   phase.status === "in-progress" && "bg-primary/5 border-primary/30 ring-2 ring-primary/20",
                   phase.status === "blocked" && "bg-destructive/5 border-destructive/30",
                   phase.status === "not-started" && "bg-muted/50 border-border"
                 )}
-                onClick={onViewPhases}
               >
                 <div className="flex items-center gap-2 mb-2">
                   {getPhaseStatusIcon(phase)}
@@ -296,7 +270,7 @@ export const ProjectOverview = ({
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-3">Phase Status</h4>
                 <div className="space-y-2">
-                  {project.phases.map((phase, index) => (
+                  {project.phases.map((phase) => (
                     <div key={phase.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
                         {getPhaseStatusIcon(phase)}
@@ -324,59 +298,8 @@ export const ProjectOverview = ({
           </Card>
         </div>
 
-        {/* Right Column - Quick Actions & Activity */}
+        {/* Right Column - Activity */}
         <div className="space-y-6">
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={onViewDeliverables}
-              >
-                <span className="flex items-center gap-2">
-                  <FolderOpen className="w-4 h-4" />
-                  View Deliverables
-                </span>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={onUploadBrief}
-              >
-                <span className="flex items-center gap-2">
-                  <FileUp className="w-4 h-4" />
-                  Upload Brief
-                </span>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={onOpenChat}
-              >
-                <span className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Project Chat
-                </span>
-                {unreadMessages > 0 && (
-                  <Badge className="bg-primary/10 text-primary text-xs">{unreadMessages} new</Badge>
-                )}
-              </Button>
-              <Button
-                variant="gradient"
-                className="w-full"
-                onClick={onViewPhases}
-              >
-                View All Phases
-              </Button>
-            </CardContent>
-          </Card>
-
           {/* Recent Activity */}
           <Card>
             <CardHeader>

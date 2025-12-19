@@ -209,10 +209,6 @@ const AdminProjectDetail = () => {
               project={project}
               isAdmin={true}
               onBack={() => navigate("/admin/projects")}
-              onViewPhases={() => setActiveTab("phases")}
-              onOpenChat={() => setActiveTab("messages")}
-              onUploadBrief={handleUploadBrief}
-              onViewDeliverables={() => setActiveTab("documents")}
             />
           </TabsContent>
 
