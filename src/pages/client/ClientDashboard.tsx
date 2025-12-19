@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProjectCard, Project } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 import {
   FolderKanban,
   MessageSquare,
@@ -11,6 +14,15 @@ import {
   Upload,
   Clock,
 } from "lucide-react";
+
+interface Activity {
+  id: string;
+  action: string;
+  action_type: string;
+  created_at: string;
+  project_id: string | null;
+  projects: { name: string } | null;
+}
 
 const mockProjects: Project[] = [
   {
@@ -33,13 +45,28 @@ const mockProjects: Project[] = [
   },
 ];
 
-const recentUpdates = [
-  { id: "1", action: "Design mockups uploaded", project: "E-commerce Platform", time: "2 hours ago", type: "file" },
-  { id: "2", action: "Status updated to Review", project: "Mobile Banking App", time: "1 day ago", type: "status" },
-  { id: "3", action: "New message from team", project: "E-commerce Platform", time: "2 days ago", type: "message" },
-];
-
 const ClientDashboard = () => {
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('activities')
+        .select('id, action, action_type, created_at, project_id, projects(name)')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!error && data) {
+        setActivities(data as Activity[]);
+      }
+    };
+
+    fetchActivities();
+  }, []);
+
   return (
     <DashboardLayout userType="client">
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
@@ -131,22 +158,30 @@ const ClientDashboard = () => {
               <CardTitle className="text-lg">Recent Updates</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {recentUpdates.map((update) => (
-                <div key={update.id} className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm">
-                      <span className="font-medium">{update.action}</span>
-                      {" in "}
-                      <span className="text-primary font-medium">{update.project}</span>
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                      <Clock className="w-3 h-3" />
-                      {update.time}
+              {activities.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No recent updates</p>
+              ) : (
+                activities.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">
+                        <span className="font-medium">{activity.action}</span>
+                        {activity.projects?.name && (
+                          <>
+                            {" in "}
+                            <span className="text-primary font-medium">{activity.projects.name}</span>
+                          </>
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
 
