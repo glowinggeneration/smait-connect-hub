@@ -22,6 +22,7 @@ import ClientProjects from "./pages/client/ClientProjects";
 import ClientMessages from "./pages/client/ClientMessages";
 import ClientCalendar from "./pages/client/ClientCalendar";
 import ClientNewBrief from "./pages/client/ClientNewBrief";
+import ClientNotifications from "./pages/client/ClientNotifications";
 import ClientProjectDetail from "./pages/client/ClientProjectDetail";
 import NotFound from "./pages/NotFound";
 
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/client/messages" element={<ClientMessages />} />
           <Route path="/client/calendar" element={<ClientCalendar />} />
           <Route path="/client/new-brief" element={<ClientNewBrief />} />
+          <Route path="/client/notifications" element={<ClientNotifications />} />
           <Route path="/client/settings" element={<AdminSettings />} />
           <Route path="/client/project/:id" element={<ClientProjectDetail />} />
           <Route path="*" element={<NotFound />} />
