@@ -45,10 +45,10 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative">
-      {/* Full screen background image */}
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Full screen background image with animation */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-[-20%] bg-cover bg-center bg-no-repeat animate-bg-pan"
         style={{ backgroundImage: `url(${loginBackground})` }}
       />
       {/* Dark overlay */}

@@ -212,6 +212,28 @@
   }
 }
 
+@keyframes bg-pan {
+  0% {
+    transform: scale(1.2) translate(0%, 0%);
+  }
+  25% {
+    transform: scale(1.25) translate(-2%, -1%);
+  }
+  50% {
+    transform: scale(1.2) translate(-1%, 2%);
+  }
+  75% {
+    transform: scale(1.25) translate(2%, 1%);
+  }
+  100% {
+    transform: scale(1.2) translate(0%, 0%);
+  }
+}
+
+.animate-bg-pan {
+  animation: bg-pan 30s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
