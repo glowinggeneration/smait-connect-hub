@@ -14,6 +14,7 @@ import {
   Clock,
   Calendar,
   Plus,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,6 +47,7 @@ const clientNavItems = [
   { icon: FolderKanban, label: "My Projects", path: "/client/projects", badge: null },
   { icon: Plus, label: "Create New Brief", path: "/client/new-brief", badge: null },
   { icon: Calendar, label: "Calendar", path: "/client/calendar", badge: null },
+  { icon: Bell, label: "Notifications", path: "/client/notifications", badge: null },
   { icon: MessageSquare, label: "Messages", path: "/client/messages", badge: 3 },
   { icon: Settings, label: "Settings", path: "/client/settings", badge: null },
 ];
