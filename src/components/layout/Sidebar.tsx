@@ -44,7 +44,6 @@ const clientNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/client", badge: null },
   { icon: FolderKanban, label: "My Projects", path: "/client/projects", badge: null },
   { icon: MessageSquare, label: "Messages", path: "/client/messages", badge: 3 },
-  { icon: FileText, label: "Documents", path: "/client/documents", badge: null },
   { icon: Settings, label: "Settings", path: "/client/settings", badge: null },
 ];
 
