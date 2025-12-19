@@ -131,7 +131,9 @@ export const Sidebar = ({ userType }: SidebarProps) => {
               {userProfile?.company && (
                 <p className="text-sm text-muted-foreground truncate">{userProfile.company}</p>
               )}
-              <p className="text-xs text-primary truncate">{getRoleLabel()}</p>
+              {userRole === "admin" && (
+                <p className="text-xs text-primary truncate">{getRoleLabel()}</p>
+              )}
             </div>
           </div>
         </div>
