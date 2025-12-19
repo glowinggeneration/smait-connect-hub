@@ -1,177 +1,190 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
-import { ProjectCard, Project } from "@/components/projects/ProjectCard";
+import { FeaturedProjectCard } from "@/components/dashboard/FeaturedProjectCard";
+import { TaskList } from "@/components/dashboard/TaskList";
+import { TodaySchedule } from "@/components/dashboard/TodaySchedule";
+import { ProjectStats } from "@/components/dashboard/ProjectStats";
+import { NewTaskForm } from "@/components/dashboard/NewTaskForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  FolderKanban,
-  Users,
-  Clock,
-  CheckCircle2,
-  Plus,
-  Bell,
-  Search,
-} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {
+  Search,
+  Archive,
+  Plus,
+} from "lucide-react";
 
-const mockProjects: Project[] = [
+const todayTasks = [
   {
     id: "1",
-    name: "E-commerce Platform Redesign",
-    description: "Complete redesign of the online shopping experience with modern UI/UX principles",
-    status: "in-progress",
-    progress: 65,
-    lastUpdated: "2 hours ago",
-    client: "TechCorp Ltd",
+    icon: (
+      <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+        U
+      </div>
+    ),
+    iconBg: "bg-primary/10",
+    title: "Uber",
+    description: "App Design and Upgrades with new features – In Progress 16 days",
+    team: [{ name: "Alex" }, { name: "Sarah" }, { name: "Mike" }],
   },
   {
     id: "2",
-    name: "Mobile Banking App",
-    description: "Native mobile application for digital banking services",
-    status: "review",
-    progress: 90,
-    lastUpdated: "1 day ago",
-    client: "FinanceHub",
+    icon: (
+      <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-primary-foreground text-xs font-bold">
+        f
+      </div>
+    ),
+    iconBg: "bg-blue-500/10",
+    title: "Facebook Ads",
+    description: "Facebook Ads Design for CreativeCloud – Last worked 5 days ago",
+    team: [{ name: "John" }, { name: "Emma" }],
   },
   {
     id: "3",
-    name: "Brand Identity Package",
-    description: "Complete brand refresh including logo, guidelines, and marketing materials",
-    status: "pending",
-    progress: 15,
-    lastUpdated: "3 days ago",
-    client: "StartupX",
-  },
-  {
-    id: "4",
-    name: "Corporate Website",
-    description: "Professional website development with CMS integration",
-    status: "completed",
-    progress: 100,
-    lastUpdated: "1 week ago",
-    client: "GlobalTech",
+    icon: (
+      <div className="w-6 h-6 rounded-lg bg-emerald-500 flex items-center justify-center text-primary-foreground text-xs font-bold">
+        P
+      </div>
+    ),
+    iconBg: "bg-emerald-500/10",
+    title: "Payoneer",
+    description: "Payoneer Dashboard Design – Due in 3 days",
+    team: [{ name: "Lisa" }, { name: "Tom" }, { name: "Kate" }],
   },
 ];
 
-const mockActivities = [
-  { id: "1", action: "Status updated to Review", project: "Mobile Banking App", time: "10 minutes ago", type: "status" as const },
-  { id: "2", action: "New file uploaded", project: "E-commerce Platform", time: "1 hour ago", type: "file" as const },
-  { id: "3", action: "Client feedback received", project: "Brand Identity", time: "2 hours ago", type: "message" as const },
-  { id: "4", action: "Milestone completed", project: "Corporate Website", time: "Yesterday", type: "update" as const },
-  { id: "5", action: "New comment added", project: "E-commerce Platform", time: "Yesterday", type: "message" as const },
+const tomorrowTasks = [
+  {
+    id: "4",
+    icon: (
+      <div className="w-6 h-6 rounded-lg bg-green-500 flex items-center justify-center text-primary-foreground text-xs font-bold">
+        up
+      </div>
+    ),
+    iconBg: "bg-green-500/10",
+    title: "Upwork",
+    description: "Developing – Viewed Just Now – Assigned 10 min ago",
+    team: [{ name: "David" }, { name: "Anna" }],
+  },
+];
+
+const schedules = [
+  {
+    label: "30 minute call with Client",
+    title: "Project Discovery Call",
+    time: "28:35",
+    participants: [
+      { name: "Alex" },
+      { name: "Sarah" },
+      { name: "Mike" },
+      { name: "John" },
+    ],
+  },
 ];
 
 const AdminDashboard = () => {
   return (
     <DashboardLayout userType="admin">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Welcome back, Admin</h1>
-          <p className="text-muted-foreground mt-1">
-            Here's what's happening with your projects today.
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search projects..." className="pl-10 w-64" />
-          </div>
-          
-          <Button variant="outline" size="icon" className="relative">
-            <Bell className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </Button>
-          
-          <Button variant="gradient">
-            <Plus className="w-4 h-4 mr-2" />
-            New Project
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatsCard
-          title="Total Projects"
-          value={12}
-          description="Active and completed"
-          icon={FolderKanban}
-          trend={{ value: 12, isPositive: true }}
-        />
-        <StatsCard
-          title="Active Clients"
-          value={8}
-          description="Currently engaged"
-          icon={Users}
-          trend={{ value: 5, isPositive: true }}
-        />
-        <StatsCard
-          title="In Progress"
-          value={5}
-          description="Ongoing projects"
-          icon={Clock}
-        />
-        <StatsCard
-          title="Completed"
-          value={7}
-          description="This month"
-          icon={CheckCircle2}
-          trend={{ value: 20, isPositive: true }}
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Projects Section */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
+        {/* Main Content */}
+        <div className="space-y-8">
+          {/* Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Recent Projects</h2>
-            <Button variant="ghost" size="sm">
-              View all
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {mockProjects.map((project, index) => (
-              <div
-                key={project.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <ProjectCard project={project} />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Hi Shakir!</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">15% task completed</span>
+              <div className="w-32">
+                <Progress value={15} variant="gradient" size="sm" />
               </div>
-            ))}
+            </div>
           </div>
-        </div>
 
-        {/* Activity & Quick Actions */}
-        <div className="space-y-6">
-          <ActivityFeed activities={mockActivities} />
-          
+          {/* Featured Projects */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FeaturedProjectCard
+              title="R&D for New Banking Mobile App"
+              icon="lightbulb"
+              gradient="primary"
+              team={[{ name: "Alex" }, { name: "Sarah" }, { name: "Mike" }]}
+            />
+            <FeaturedProjectCard
+              title="Create Signup Page"
+              icon="target"
+              gradient="teal"
+              team={[{ name: "John" }, { name: "Emma" }]}
+            />
+          </div>
+
+          {/* Monthly Tasks */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <CardTitle className="text-xl font-semibold">Monthly Tasks</CardTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Archive className="w-4 h-4" />
+                  Archive
+                </Button>
+                <Button variant="gradient" size="sm" className="gap-1">
+                  <Plus className="w-4 h-4" />
+                  New
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="w-4 h-4 mr-2" />
-                Add New Client
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <FolderKanban className="w-4 h-4 mr-2" />
-                Create Project
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Bell className="w-4 h-4 mr-2" />
-                Send Notification
-              </Button>
+            <CardContent>
+              <Tabs defaultValue="active" className="w-full">
+                <div className="flex items-center justify-between mb-6">
+                  <TabsList className="bg-transparent p-0 h-auto gap-6">
+                    <TabsTrigger
+                      value="active"
+                      className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2"
+                    >
+                      Active Tasks
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="completed"
+                      className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary rounded-none px-0 pb-2"
+                    >
+                      Completed
+                    </TabsTrigger>
+                  </TabsList>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search"
+                      className="pl-9 w-40 h-9 bg-muted/50 border-0"
+                    />
+                  </div>
+                </div>
+
+                <TabsContent value="active" className="mt-0 space-y-6">
+                  <TaskList title="Today" tasks={todayTasks} />
+                  <TaskList title="Tomorrow" tasks={tomorrowTasks} />
+                </TabsContent>
+
+                <TabsContent value="completed" className="mt-0">
+                  <div className="text-center py-8 text-muted-foreground">
+                    No completed tasks yet
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Right Panel */}
+        <div className="space-y-6">
+          <TodaySchedule schedules={schedules} />
+          <ProjectStats
+            title="Design Project"
+            status="In Progress"
+            completed={114}
+            inProgress={24}
+            team={[{ name: "Mike" }, { name: "Sarah" }, { name: "Alex" }]}
+          />
+          <NewTaskForm />
         </div>
       </div>
     </DashboardLayout>

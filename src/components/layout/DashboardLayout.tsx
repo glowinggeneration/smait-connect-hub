@@ -9,13 +9,13 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/30">
       <Sidebar userType={userType} />
       
       {/* Main content */}
       <main className={cn(
         "transition-all duration-300 lg:ml-64 min-h-screen",
-        "pt-16 lg:pt-0" // Account for mobile header
+        "pt-16 lg:pt-0"
       )}>
         <div className="p-6 lg:p-8">
           {children}
