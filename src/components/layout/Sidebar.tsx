@@ -18,9 +18,13 @@ import {
   Bell,
   Moon,
   Sun,
+  Menu,
+  X,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface SidebarProps {
   userType: "admin" | "client";
@@ -40,29 +44,44 @@ const adminNavItems = [
   { icon: FileText, label: "Briefs", path: "/admin/briefs" },
   { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
   { icon: Clock, label: "Standups", path: "/admin/standups" },
-  { icon: Calendar, label: "Meetings", path: "/admin/meetings", badge: 5 },
+  { icon: Calendar, label: "Meetings", path: "/admin/meetings" },
   { icon: Users, label: "Clients", path: "/admin/clients" },
   { icon: Settings, label: "Settings", path: "/admin/settings" },
 ];
 
 const clientNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/client", badge: null },
-  { icon: FolderKanban, label: "My Projects", path: "/client/projects", badge: null },
-  { icon: Plus, label: "Create New Brief", path: "/client/new-brief", badge: null },
-  { icon: MessageSquare, label: "Messages", path: "/client/messages", badge: 3 },
-  { icon: Bell, label: "Notifications", path: "/client/notifications", badge: null },
-  { icon: Calendar, label: "Calendar", path: "/client/calendar", badge: null },
-  { icon: Settings, label: "Settings", path: "/client/settings", badge: null },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/client" },
+  { icon: FolderKanban, label: "My Projects", path: "/client/projects" },
+  { icon: Plus, label: "New Brief", path: "/client/new-brief" },
+  { icon: MessageSquare, label: "Messages", path: "/client/messages" },
+  { icon: Bell, label: "Notifications", path: "/client/notifications" },
+  { icon: Settings, label: "Settings", path: "/client/settings" },
 ];
 
+// Bottom nav items (limited for mobile)
+const adminBottomNav = [
+  { icon: Home, label: "Home", path: "/admin" },
+  { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
+  { icon: Inbox, label: "Tasks", path: "/admin/tasks" },
+  { icon: Users, label: "Clients", path: "/admin/clients" },
+];
+
+const clientBottomNav = [
+  { icon: Home, label: "Home", path: "/client" },
+  { icon: FolderKanban, label: "Projects", path: "/client/projects" },
+  { icon: Plus, label: "Brief", path: "/client/new-brief" },
+  { icon: MessageSquare, label: "Messages", path: "/client/messages" },
+];
 
 export const Sidebar = ({ userType }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const navItems = userType === "admin" ? adminNavItems : clientNavItems;
+  const bottomNavItems = userType === "admin" ? adminBottomNav : clientBottomNav;
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
@@ -73,7 +92,6 @@ export const Sidebar = ({ userType }: SidebarProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, email, avatar_url, company")
@@ -84,7 +102,6 @@ export const Sidebar = ({ userType }: SidebarProps) => {
         setUserProfile(profile);
       }
 
-      // Fetch role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -119,109 +136,130 @@ export const Sidebar = ({ userType }: SidebarProps) => {
     return "User";
   };
 
-  return (
+  const NavContent = () => (
     <>
-      {/* Desktop Sidebar - Light theme matching reference */}
-      <aside className="hidden lg:flex flex-col bg-card border-r border-border transition-all duration-300 fixed left-0 top-0 bottom-0 z-40 w-64">
-        {/* User Profile */}
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-12 h-12">
-              <AvatarImage src={userProfile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-gradient-to-br from-amber-200 to-amber-400 text-amber-800">
-                {getInitials(userProfile?.full_name || "U")}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-foreground truncate">
-                {userProfile?.full_name || "Loading..."}
-              </p>
-              {userProfile?.company && (
-                <p className="text-sm text-muted-foreground truncate">{userProfile.company}</p>
-              )}
-              {userRole === "admin" && (
-                <p className="text-xs text-primary truncate">{getRoleLabel()}</p>
-              )}
-            </div>
+      {/* User Profile */}
+      <div className="p-5 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <Avatar className="w-11 h-11 ring-2 ring-primary/20">
+            <AvatarImage src={userProfile?.avatar_url || undefined} />
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold">
+              {getInitials(userProfile?.full_name || "U")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground truncate text-sm">
+              {userProfile?.full_name || "Loading..."}
+            </p>
+            <p className="text-xs text-primary truncate">{getRoleLabel()}</p>
           </div>
         </div>
+      </div>
 
-        {/* Menu Section */}
-        <div className="flex-1 py-4 px-4 overflow-y-auto">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 mb-3">
-            Menu
-          </p>
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative group",
-                    isActive
-                      ? "text-primary font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
-                  )}
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
-                  <span>{item.label}</span>
-                  {item.badge && (
-                    <span className="ml-auto bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </NavLink>
-              );
-            })}
-          </nav>
+      {/* Menu Section */}
+      <div className="flex-1 py-3 px-3 overflow-y-auto">
+        <nav className="space-y-0.5">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group",
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-primary")} />
+                <span className="text-sm">{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      </div>
 
-        </div>
+      {/* Theme Toggle & Logout */}
+      <div className="px-3 py-4 border-t border-border/50 space-y-1">
+        <Button
+          variant="ghost"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground h-10 rounded-xl"
+        >
+          {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          <span className="text-sm">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 rounded-xl"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm">Logout</span>
+        </Button>
+      </div>
+    </>
+  );
 
-        {/* Add Button */}
-        <div className="p-4">
-          <Button
-            size="icon"
-            variant="gradient"
-            className="w-12 h-12 rounded-full shadow-lg shadow-primary/30"
-          >
-            <Plus className="w-6 h-6" />
-          </Button>
-        </div>
+  return (
+    <>
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card/95 backdrop-blur-lg border-b border-border/50 z-50 flex items-center justify-between px-4 safe-area-top">
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Menu className="w-5 h-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 p-0 flex flex-col">
+            <NavContent />
+          </SheetContent>
+        </Sheet>
 
-        {/* Theme Toggle & Logout */}
-        <div className="px-4 py-4 border-t border-border space-y-2">
-          <Button
-            variant="ghost"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
-          >
-            {theme === "dark" ? (
-              <>
-                <Sun className="w-5 h-5" />
-                <span>Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-5 h-5" />
-                <span>Dark Mode</span>
-              </>
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </Button>
-          <p className="text-xs text-muted-foreground px-3 pt-2">2024 SMAIT Digital License</p>
-        </div>
+        <h1 className="font-semibold text-foreground">
+          {userType === "admin" ? "SMAIT Admin" : "SMAIT Portal"}
+        </h1>
+
+        <Avatar className="w-8 h-8">
+          <AvatarImage src={userProfile?.avatar_url || undefined} />
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary text-xs font-semibold">
+            {getInitials(userProfile?.full_name || "U")}
+          </AvatarFallback>
+        </Avatar>
+      </header>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-lg border-t border-border/50 z-50 flex items-center justify-around px-2 safe-area-bottom">
+        {bottomNavItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all min-w-[60px]",
+                isActive
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              )}
+            >
+              <div className={cn(
+                "p-1.5 rounded-xl transition-all",
+                isActive && "bg-primary/10"
+              )}>
+                <item.icon className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </NavLink>
+          );
+        })}
+      </nav>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex flex-col bg-card border-r border-border/50 transition-all duration-300 fixed left-0 top-0 bottom-0 z-40 w-60">
+        <NavContent />
       </aside>
     </>
   );
