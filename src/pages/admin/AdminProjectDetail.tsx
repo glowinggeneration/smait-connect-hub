@@ -1,21 +1,143 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProjectPhasesView } from "@/components/projects/ProjectPhasesView";
 import { ProjectOverview } from "@/components/projects/ProjectOverview";
-import { mockProject, Project } from "@/types/project";
-import { useNavigate } from "react-router-dom";
+import { mockProject, Project, defaultPhases } from "@/types/project";
+import { useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Layers, FileText, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Layers, FileText, MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminProjectDetail = () => {
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project>(mockProject);
+  const { id } = useParams<{ id: string }>();
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
-  const handleUpdateProject = (updatedProject: Project) => {
+  useEffect(() => {
+    if (id) {
+      fetchProject();
+    }
+  }, [id]);
+
+  const fetchProject = async () => {
+    try {
+      const { data: projectData, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+
+      // Get client name
+      const { data: clientProfile } = await supabase
+        .from("profiles")
+        .select("full_name, company")
+        .eq("user_id", projectData.client_id)
+        .single();
+
+      // Build project with phases (using default phases structure)
+      const projectWithPhases: Project = {
+        id: projectData.id,
+        name: projectData.name,
+        description: projectData.description || "",
+        clientId: projectData.client_id,
+        clientName: clientProfile?.full_name || clientProfile?.company || "Unknown",
+        currentPhase: projectData.current_phase,
+        phases: defaultPhases.map((phase, index) => ({
+          ...phase,
+          id: `phase-${index + 1}`,
+          status: index < projectData.current_phase - 1 
+            ? "completed" 
+            : index === projectData.current_phase - 1 
+              ? "in-progress" 
+              : "not-started",
+          progress: index < projectData.current_phase - 1 
+            ? 100 
+            : index === projectData.current_phase - 1 
+              ? projectData.progress 
+              : 0,
+        })),
+        createdAt: projectData.created_at,
+        updatedAt: projectData.updated_at,
+      };
+
+      setProject(projectWithPhases);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateProject = async (updatedProject: Project) => {
     setProject(updatedProject);
-    console.log("Project updated:", updatedProject);
+    
+    // Calculate overall progress from phases
+    const overallProgress = Math.round(
+      updatedProject.phases.reduce((acc, phase) => acc + phase.progress, 0) /
+        updatedProject.phases.length
+    );
+
+    // Determine status
+    const completedPhases = updatedProject.phases.filter(p => p.status === "completed").length;
+    let status = "in-progress";
+    if (overallProgress === 100) {
+      status = "completed";
+    } else if (overallProgress === 0) {
+      status = "not-started";
+    }
+
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({
+          progress: overallProgress,
+          status,
+          current_phase: updatedProject.currentPhase,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", updatedProject.id);
+
+      if (error) throw error;
+
+      // Log activity
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activities").insert({
+          user_id: user.id,
+          project_id: updatedProject.id,
+          action: `Updated project progress to ${overallProgress}%`,
+          action_type: "update",
+        });
+
+        // Notify client
+        await supabase.from("notifications").insert({
+          user_id: updatedProject.clientId,
+          title: "Project Updated",
+          message: `${updatedProject.name} progress updated to ${overallProgress}%`,
+          type: overallProgress === 100 ? "success" : "info",
+        });
+      }
+
+      toast({
+        title: "Project Updated",
+        description: `Progress saved: ${overallProgress}%`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error saving changes",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUploadBrief = () => {
@@ -38,6 +160,26 @@ const AdminProjectDetail = () => {
       description: "Deliverables view coming soon.",
     });
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!project) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center h-96 text-muted-foreground">
+          Project not found
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="admin">
