@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import loginBackground from "@/assets/login-background.jpg";
@@ -66,6 +66,15 @@ const Login = () => {
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
+
+      {/* Back to home arrow */}
+      <a 
+        href="https://www.smait.co.za" 
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/70 hover:text-white transition-colors group"
+      >
+        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm font-medium">Back to Home</span>
+      </a>
 
       {/* Glassmorphism Login Card */}
       <div className="relative z-10 w-full max-w-md mx-4">
