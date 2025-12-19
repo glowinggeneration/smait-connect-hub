@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -23,128 +25,182 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, FolderKanban } from "lucide-react";
+import { Plus, Search, FolderKanban, Loader2, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
-interface SimpleProject {
+interface Project {
   id: string;
   name: string;
-  description: string;
-  status: "pending" | "in-progress" | "review" | "completed";
+  description: string | null;
+  client_id: string;
+  status: string;
   progress: number;
-  lastUpdated: string;
-  client: string;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-const mockProjects: SimpleProject[] = [
-  {
-    id: "1",
-    name: "E-commerce Platform Redesign",
-    description: "Complete redesign of the online shopping experience with modern UI/UX principles",
-    status: "in-progress",
-    progress: 65,
-    lastUpdated: "2 hours ago",
-    client: "TechCorp Ltd",
-  },
-  {
-    id: "2",
-    name: "Mobile Banking App",
-    description: "Native mobile application for digital banking services",
-    status: "review",
-    progress: 90,
-    lastUpdated: "1 day ago",
-    client: "FinanceHub",
-  },
-  {
-    id: "3",
-    name: "Brand Identity Package",
-    description: "Complete brand refresh including logo, guidelines, and marketing materials",
-    status: "pending",
-    progress: 15,
-    lastUpdated: "3 days ago",
-    client: "StartupX",
-  },
-  {
-    id: "4",
-    name: "Corporate Website",
-    description: "Professional website development with CMS integration",
-    status: "completed",
-    progress: 100,
-    lastUpdated: "1 week ago",
-    client: "GlobalTech",
-  },
-  {
-    id: "5",
-    name: "Social Media Dashboard",
-    description: "Analytics dashboard for social media management",
-    status: "in-progress",
-    progress: 45,
-    lastUpdated: "5 hours ago",
-    client: "MediaCo",
-  },
-  {
-    id: "6",
-    name: "HR Management System",
-    description: "Internal tool for employee management and payroll",
-    status: "pending",
-    progress: 5,
-    lastUpdated: "2 days ago",
-    client: "TechCorp Ltd",
-  },
-];
+interface Client {
+  user_id: string;
+  full_name: string;
+  company: string | null;
+}
 
 const AdminProjects = () => {
-  const [projects, setProjects] = useState<SimpleProject[]>(mockProjects);
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
-    client: "",
+    client_id: "",
+    due_date: "",
   });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch projects
+      const { data: projectsData, error: projectsError } = await supabase
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (projectsError) throw projectsError;
+
+      // Fetch clients
+      const { data: clientRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "client");
+
+      if (clientRoles && clientRoles.length > 0) {
+        const clientIds = clientRoles.map((r) => r.user_id);
+        const { data: clientProfiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, company")
+          .in("user_id", clientIds);
+        setClients(clientProfiles || []);
+      }
+
+      setProjects(projectsData || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getClientName = (clientId: string) => {
+    const client = clients.find((c) => c.user_id === clientId);
+    return client?.full_name || client?.company || "Unknown Client";
+  };
 
   const filteredProjects = projects.filter(
     (project) =>
       project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.client.toLowerCase().includes(searchQuery.toLowerCase())
+      getClientName(project.client_id).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCreateProject = () => {
-    if (!newProject.name || !newProject.client) {
+  const handleCreateProject = async () => {
+    if (!newProject.name || !newProject.client_id) {
       toast({
         title: "Missing Information",
-        description: "Please fill in project name and client.",
+        description: "Please fill in project name and select a client.",
         variant: "destructive",
       });
       return;
     }
 
-    const project: SimpleProject = {
-      id: `proj-${Date.now()}`,
-      name: newProject.name,
-      description: newProject.description,
-      status: "pending",
-      progress: 0,
-      lastUpdated: "Just now",
-      client: newProject.client,
-    };
+    setIsCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({
+          name: newProject.name,
+          description: newProject.description || null,
+          client_id: newProject.client_id,
+          due_date: newProject.due_date || null,
+          status: "not-started",
+          progress: 0,
+        })
+        .select()
+        .single();
 
-    setProjects([project, ...projects]);
-    setNewProject({ name: "", description: "", client: "" });
-    setIsDialogOpen(false);
-    toast({
-      title: "Project Created",
-      description: `${project.name} has been created successfully.`,
-    });
+      if (error) throw error;
+
+      // Log activity
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activities").insert({
+          user_id: user.id,
+          project_id: data.id,
+          action: `Created new project: ${newProject.name}`,
+          action_type: "create",
+        });
+      }
+
+      setProjects([data, ...projects]);
+      setNewProject({ name: "", description: "", client_id: "", due_date: "" });
+      setIsDialogOpen(false);
+      toast({
+        title: "Project Created",
+        description: `${data.name} has been created successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const projectsByStatus = {
     all: filteredProjects,
     active: filteredProjects.filter((p) => p.status === "in-progress"),
-    review: filteredProjects.filter((p) => p.status === "review"),
-    pending: filteredProjects.filter((p) => p.status === "pending"),
+    review: filteredProjects.filter((p) => p.status === "on-hold"),
+    pending: filteredProjects.filter((p) => p.status === "not-started"),
     completed: filteredProjects.filter((p) => p.status === "completed"),
   };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Completed</Badge>;
+      case "in-progress":
+        return <Badge className="bg-primary/10 text-primary border-primary/20">In Progress</Badge>;
+      case "on-hold":
+        return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">On Hold</Badge>;
+      default:
+        return <Badge className="bg-muted text-muted-foreground">Not Started</Badge>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="admin">
@@ -180,12 +236,12 @@ const AdminProjects = () => {
                 <DialogHeader>
                   <DialogTitle>Create New Project</DialogTitle>
                   <DialogDescription>
-                    Add a new project for a client. You can configure phases after creation.
+                    Add a new project for a client.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Project Name</Label>
+                    <Label htmlFor="name">Project Name *</Label>
                     <Input
                       id="name"
                       placeholder="Enter project name"
@@ -196,24 +252,41 @@ const AdminProjects = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="client">Client</Label>
+                    <Label htmlFor="client">Client *</Label>
                     <Select
-                      value={newProject.client}
+                      value={newProject.client_id}
                       onValueChange={(value) =>
-                        setNewProject({ ...newProject, client: value })
+                        setNewProject({ ...newProject, client_id: value })
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="TechCorp Ltd">TechCorp Ltd</SelectItem>
-                        <SelectItem value="FinanceHub">FinanceHub</SelectItem>
-                        <SelectItem value="StartupX">StartupX</SelectItem>
-                        <SelectItem value="GlobalTech">GlobalTech</SelectItem>
-                        <SelectItem value="MediaCo">MediaCo</SelectItem>
+                        {clients.length > 0 ? (
+                          clients.map((client) => (
+                            <SelectItem key={client.user_id} value={client.user_id}>
+                              {client.full_name} {client.company && `(${client.company})`}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No clients available
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="due_date">Due Date</Label>
+                    <Input
+                      id="due_date"
+                      type="date"
+                      value={newProject.due_date}
+                      onChange={(e) =>
+                        setNewProject({ ...newProject, due_date: e.target.value })
+                      }
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
@@ -231,8 +304,8 @@ const AdminProjects = () => {
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button variant="gradient" onClick={handleCreateProject}>
-                    Create Project
+                  <Button variant="gradient" onClick={handleCreateProject} disabled={isCreating}>
+                    {isCreating ? "Creating..." : "Create Project"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -269,9 +342,9 @@ const AdminProjects = () => {
             <CardContent className="p-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-amber-500">
-                  {projectsByStatus.review.length}
+                  {projectsByStatus.pending.length}
                 </p>
-                <p className="text-xs text-muted-foreground">In Review</p>
+                <p className="text-xs text-muted-foreground">Not Started</p>
               </div>
             </CardContent>
           </Card>
@@ -292,8 +365,7 @@ const AdminProjects = () => {
           <TabsList>
             <TabsTrigger value="all">All ({projectsByStatus.all.length})</TabsTrigger>
             <TabsTrigger value="active">Active ({projectsByStatus.active.length})</TabsTrigger>
-            <TabsTrigger value="review">Review ({projectsByStatus.review.length})</TabsTrigger>
-            <TabsTrigger value="pending">Pending ({projectsByStatus.pending.length})</TabsTrigger>
+            <TabsTrigger value="pending">Not Started ({projectsByStatus.pending.length})</TabsTrigger>
             <TabsTrigger value="completed">Completed ({projectsByStatus.completed.length})</TabsTrigger>
           </TabsList>
 
@@ -302,13 +374,38 @@ const AdminProjects = () => {
               {projectList.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {projectList.map((project, index) => (
-                    <div
+                    <Card
                       key={project.id}
-                      className="animate-fade-in"
+                      className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all animate-fade-in"
                       style={{ animationDelay: `${index * 50}ms` }}
+                      onClick={() => navigate(`/admin/project/${project.id}`)}
                     >
-                      <ProjectCard project={project} />
-                    </div>
+                      <CardContent className="p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          {getStatusBadge(project.status)}
+                          <span className="text-sm font-bold text-primary">{project.progress}%</span>
+                        </div>
+                        <h3 className="font-semibold mb-1 line-clamp-1">{project.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {getClientName(project.client_id)}
+                        </p>
+                        {project.description && (
+                          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                            {project.description}
+                          </p>
+                        )}
+                        <Progress value={project.progress} size="sm" className="mb-3" />
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
+                          </span>
+                          {project.due_date && (
+                            <span>Due: {new Date(project.due_date).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               ) : (
