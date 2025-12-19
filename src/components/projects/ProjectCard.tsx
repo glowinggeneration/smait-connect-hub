@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Clock, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export interface Project {
   id: string;
@@ -28,7 +29,18 @@ const statusConfig = {
 };
 
 export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
+  const navigate = useNavigate();
   const status = statusConfig[project.status];
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      // Default navigation - determine if admin or client based on current path
+      const isAdmin = window.location.pathname.startsWith("/admin");
+      navigate(isAdmin ? `/admin/project/${project.id}` : `/client/project/${project.id}`);
+    }
+  };
 
   return (
     <Card
@@ -37,7 +49,7 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
         "cursor-pointer group",
         "hover:border-primary/30"
       )}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
