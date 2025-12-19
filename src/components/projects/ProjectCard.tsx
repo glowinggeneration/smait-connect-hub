@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Clock, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { differenceInDays, format, parseISO } from "date-fns";
 
 export interface Project {
   id: string;
@@ -12,6 +13,7 @@ export interface Project {
   status: "pending" | "in-progress" | "review" | "completed";
   progress: number;
   lastUpdated: string;
+  dueDate?: string;
   client?: string;
   team?: string[];
 }
@@ -32,11 +34,20 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const navigate = useNavigate();
   const status = statusConfig[project.status];
 
+  const getDaysRemaining = () => {
+    if (!project.dueDate) return null;
+    const dueDate = parseISO(project.dueDate);
+    const today = new Date();
+    const days = differenceInDays(dueDate, today);
+    return days;
+  };
+
+  const daysRemaining = getDaysRemaining();
+
   const handleClick = () => {
     if (onClick) {
       onClick();
     } else {
-      // Default navigation - determine if admin or client based on current path
       const isAdmin = window.location.pathname.startsWith("/admin");
       navigate(isAdmin ? `/admin/project/${project.id}` : `/client/project/${project.id}`);
     }
@@ -70,6 +81,26 @@ export const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
           </div>
           <Progress value={project.progress} variant="gradient" size="default" />
         </div>
+
+        {/* Due Date */}
+        {project.dueDate && (
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Due: {format(parseISO(project.dueDate), "MMM d, yyyy")}</span>
+            </div>
+            <Badge 
+              variant={daysRemaining !== null && daysRemaining < 0 ? "destructive" : daysRemaining !== null && daysRemaining <= 7 ? "warning" : "secondary"}
+              className="text-xs"
+            >
+              {daysRemaining !== null && daysRemaining < 0 
+                ? `${Math.abs(daysRemaining)} days overdue`
+                : daysRemaining === 0 
+                  ? "Due today"
+                  : `${daysRemaining} days left`}
+            </Badge>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
