@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ProjectCard, Project } from "@/components/projects/ProjectCard";
+import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +13,7 @@ import {
   CheckCircle2,
   Plus,
   Clock,
+  Loader2,
 } from "lucide-react";
 
 interface Activity {
@@ -23,48 +25,113 @@ interface Activity {
   projects: { name: string } | null;
 }
 
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    name: "E-commerce Platform Redesign",
-    description: "Complete redesign of your online shopping experience with modern UI/UX",
-    status: "in-progress",
-    progress: 65,
-    lastUpdated: "2 hours ago",
-    dueDate: "2025-01-15",
-  },
-  {
-    id: "2",
-    name: "Mobile Banking App",
-    description: "Native mobile application for digital banking services",
-    status: "review",
-    progress: 90,
-    lastUpdated: "1 day ago",
-    dueDate: "2025-01-05",
-  },
-];
+interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  progress: number;
+  due_date: string | null;
+  updated_at: string;
+}
 
 const ClientDashboard = () => {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchActivities = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    fetchData();
 
-      const { data, error } = await supabase
-        .from('activities')
-        .select('id, action, action_type, created_at, project_id, projects(name)')
-        .order('created_at', { ascending: false })
-        .limit(10);
+    // Subscribe to realtime project changes
+    const projectChannel = supabase
+      .channel("client-projects")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "projects" },
+        (payload) => {
+          if (payload.eventType === "UPDATE") {
+            setProjects((prev) =>
+              prev.map((p) =>
+                p.id === payload.new.id ? (payload.new as Project) : p
+              )
+            );
+          } else if (payload.eventType === "INSERT") {
+            // Refetch to check if it's for this client
+            fetchProjects();
+          }
+        }
+      )
+      .subscribe();
 
-      if (!error && data) {
-        setActivities(data as Activity[]);
-      }
+    // Subscribe to realtime activity changes
+    const activityChannel = supabase
+      .channel("client-activities")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "activities" },
+        () => {
+          fetchActivities();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(projectChannel);
+      supabase.removeChannel(activityChannel);
     };
-
-    fetchActivities();
   }, []);
+
+  const fetchData = async () => {
+    await Promise.all([fetchProjects(), fetchActivities()]);
+    setLoading(false);
+  };
+
+  const fetchProjects = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("projects")
+      .select("id, name, description, status, progress, due_date, updated_at")
+      .eq("client_id", user.id)
+      .order("updated_at", { ascending: false });
+
+    if (!error && data) {
+      setProjects(data);
+    }
+  };
+
+  const fetchActivities = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("activities")
+      .select("id, action, action_type, created_at, project_id, projects(name)")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!error && data) {
+      setActivities(data as Activity[]);
+    }
+  };
+
+  const completedMilestones = projects.reduce(
+    (acc, p) => acc + Math.floor(p.progress / 25),
+    0
+  );
+
+  if (loading) {
+    return (
+      <DashboardLayout userType="client">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userType="client">
@@ -79,8 +146,8 @@ const ClientDashboard = () => {
                 Track your project progress and communicate with our team.
               </p>
             </div>
-            
-            <Button variant="gradient" onClick={() => window.location.href = '/client/new-brief'}>
+
+            <Button variant="gradient" onClick={() => navigate("/client/new-brief")}>
               <Plus className="w-4 h-4 mr-2" />
               New Brief
             </Button>
@@ -89,9 +156,9 @@ const ClientDashboard = () => {
           {/* Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { label: "Active Projects", value: "2", icon: FolderKanban, color: "text-primary" },
+              { label: "Active Projects", value: projects.length.toString(), icon: FolderKanban, color: "text-primary" },
               { label: "Messages", value: "5", icon: MessageSquare, color: "text-blue-500" },
-              { label: "Milestones", value: "8", icon: CheckCircle2, color: "text-emerald-500" },
+              { label: "Milestones", value: completedMilestones.toString(), icon: CheckCircle2, color: "text-emerald-500" },
             ].map((stat, index) => (
               <Card key={index}>
                 <CardContent className="p-4 flex items-center gap-4">
@@ -110,41 +177,78 @@ const ClientDashboard = () => {
           {/* Projects */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Your Projects</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {mockProjects.map((project, index) => (
-                <div
-                  key={project.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <ProjectCard project={project} />
-                </div>
-              ))}
-            </div>
+            {projects.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <FolderKanban className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground">No projects yet</p>
+                  <Button
+                    variant="gradient"
+                    className="mt-4"
+                    onClick={() => navigate("/client/new-brief")}
+                  >
+                    Submit a Brief
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {projects.map((project, index) => {
+                  // Map database status to ProjectCard status
+                  const statusMap: Record<string, "pending" | "in-progress" | "review" | "completed"> = {
+                    "not-started": "pending",
+                    "in-progress": "in-progress",
+                    "on-hold": "review",
+                    "completed": "completed",
+                  };
+                  
+                  return (
+                    <div
+                      key={project.id}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <ProjectCard
+                        project={{
+                          id: project.id,
+                          name: project.name,
+                          description: project.description || "",
+                          status: statusMap[project.status] || "pending",
+                          progress: project.progress,
+                          lastUpdated: formatDistanceToNow(new Date(project.updated_at), { addSuffix: true }),
+                          dueDate: project.due_date || undefined,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Overall Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Overall Progress</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {mockProjects.map((project) => (
-                <div key={project.id} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-sm">{project.name}</span>
-                    <span className="text-sm text-muted-foreground">{project.progress}%</span>
+          {projects.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Overall Progress</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {projects.map((project) => (
+                  <div key={project.id} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-sm">{project.name}</span>
+                      <span className="text-sm text-muted-foreground">{project.progress}%</span>
+                    </div>
+                    <Progress value={project.progress} variant="gradient" />
                   </div>
-                  <Progress value={project.progress} variant="gradient" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Panel */}
         <div className="space-y-6">
-          
           {/* Recent Updates */}
           <Card>
             <CardHeader>
@@ -177,8 +281,6 @@ const ClientDashboard = () => {
               )}
             </CardContent>
           </Card>
-
-          
         </div>
       </div>
     </DashboardLayout>
