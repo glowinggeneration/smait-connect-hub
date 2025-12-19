@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Search, 
   Mail, 
@@ -17,139 +17,116 @@ import {
   Archive,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Target,
+  FileUp,
+  Loader2
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
 
-interface InboxItem {
+interface Activity {
   id: string;
-  from: string;
-  fromEmail: string;
-  subject: string;
-  preview: string;
-  timestamp: string;
-  isRead: boolean;
-  isStarred: boolean;
-  type: "notification" | "message" | "alert";
-  category: "inbox" | "archived";
+  user_id: string;
+  project_id: string | null;
+  action: string;
+  action_type: string;
+  created_at: string;
+  profiles?: { full_name: string; email: string };
+  projects?: { name: string };
 }
 
-const initialInbox: InboxItem[] = [
-  {
-    id: "1",
-    from: "John Smith",
-    fromEmail: "john@techcorp.com",
-    subject: "Project Update Required",
-    preview: "Hi, I wanted to check on the progress of the e-commerce platform redesign. Can we schedule a call to discuss the timeline?",
-    timestamp: "10:30 AM",
-    isRead: false,
-    isStarred: true,
-    type: "message",
-    category: "inbox",
-  },
-  {
-    id: "2",
-    from: "System",
-    fromEmail: "system@smait.com",
-    subject: "New Client Registration",
-    preview: "A new client 'StartupX' has been registered in the system. Please review their details and assign a project manager.",
-    timestamp: "9:15 AM",
-    isRead: false,
-    isStarred: false,
-    type: "notification",
-    category: "inbox",
-  },
-  {
-    id: "3",
-    from: "Sarah Johnson",
-    fromEmail: "sarah@financehub.com",
-    subject: "Feedback on Deliverables",
-    preview: "Thank you for the latest designs. I have a few suggestions regarding the color scheme and typography. Please find my detailed feedback attached.",
-    timestamp: "Yesterday",
-    isRead: true,
-    isStarred: false,
-    type: "message",
-    category: "inbox",
-  },
-  {
-    id: "4",
-    from: "Alert",
-    fromEmail: "alerts@smait.com",
-    subject: "Project Deadline Approaching",
-    preview: "The Mobile Banking App project has a deadline in 3 days. Current progress is at 90%. Please ensure all deliverables are ready.",
-    timestamp: "Yesterday",
-    isRead: true,
-    isStarred: true,
-    type: "alert",
-    category: "inbox",
-  },
-  {
-    id: "5",
-    from: "Mike Brown",
-    fromEmail: "mike@startupx.io",
-    subject: "Contract Renewal Discussion",
-    preview: "Our current contract is expiring next month. I'd like to discuss renewal terms and potentially expand our partnership.",
-    timestamp: "2 days ago",
-    isRead: true,
-    isStarred: false,
-    type: "message",
-    category: "inbox",
-  },
-];
-
 const AdminInbox = () => {
-  const [inbox, setInbox] = useState<InboxItem[]>(initialInbox);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<InboxItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Activity | null>(null);
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
-  const filteredInbox = inbox.filter(
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const fetchActivities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("activities")
+        .select("*, profiles!activities_user_id_fkey(full_name, email), projects(name)")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setActivities(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredActivities = activities.filter(
     (item) =>
-      item.category === "inbox" &&
-      (item.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.from.toLowerCase().includes(searchQuery.toLowerCase()))
+      item.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const unreadCount = inbox.filter((i) => !i.isRead && i.category === "inbox").length;
-  const starredCount = inbox.filter((i) => i.isStarred && i.category === "inbox").length;
+  const unreadCount = activities.filter((a) => !readIds.has(a.id)).length;
+  const starredCount = starredIds.size;
 
-  const handleSelectItem = (item: InboxItem) => {
+  const handleSelectItem = (item: Activity) => {
     setSelectedItem(item);
-    if (!item.isRead) {
-      setInbox(inbox.map((i) => (i.id === item.id ? { ...i, isRead: true } : i)));
-    }
+    setReadIds((prev) => new Set([...prev, item.id]));
   };
 
   const toggleStar = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setInbox(inbox.map((i) => (i.id === id ? { ...i, isStarred: !i.isStarred } : i)));
-  };
-
-  const archiveItem = (id: string) => {
-    setInbox(inbox.map((i) => (i.id === id ? { ...i, category: "archived" } : i)));
-    setSelectedItem(null);
-    toast({
-      title: "Archived",
-      description: "Message moved to archive.",
+    setStarredIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
     });
   };
 
-  const deleteItem = (id: string) => {
-    setInbox(inbox.filter((i) => i.id !== id));
-    setSelectedItem(null);
-    toast({
-      title: "Deleted",
-      description: "Message has been deleted.",
-    });
+  const deleteItem = async (id: string) => {
+    try {
+      const { error } = await supabase.from("activities").delete().eq("id", id);
+      if (error) throw error;
+      
+      setActivities(activities.filter((a) => a.id !== id));
+      setSelectedItem(null);
+      toast({
+        title: "Deleted",
+        description: "Activity has been deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const getTypeIcon = (type: InboxItem["type"]) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
-      case "alert":
+      case "milestone":
+        return <Target className="w-4 h-4 text-emerald-500" />;
+      case "upload":
+        return <FileUp className="w-4 h-4 text-blue-500" />;
+      case "create":
+        return <CheckCircle2 className="w-4 h-4 text-primary" />;
+      case "delete":
         return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case "notification":
-        return <CheckCircle2 className="w-4 h-4 text-blue-500" />;
       default:
-        return null;
+        return <Clock className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -162,6 +139,16 @@ const AdminInbox = () => {
       .slice(0, 2);
   };
 
+  if (loading) {
+    return (
+      <DashboardLayout userType="admin">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout userType="admin">
       <div className="space-y-6">
@@ -170,7 +157,7 @@ const AdminInbox = () => {
           <div>
             <h1 className="text-2xl font-bold">Inbox</h1>
             <p className="text-muted-foreground">
-              Manage your notifications and messages
+              View all notifications and activity
             </p>
           </div>
 
@@ -215,7 +202,7 @@ const AdminInbox = () => {
                 <MailOpen className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{filteredInbox.length}</p>
+                <p className="text-2xl font-bold">{activities.length}</p>
                 <p className="text-xs text-muted-foreground">Total</p>
               </div>
             </CardContent>
@@ -228,56 +215,60 @@ const AdminInbox = () => {
           <Card className="lg:col-span-1">
             <ScrollArea className="h-[600px]">
               <div className="divide-y">
-                {filteredInbox.length > 0 ? (
-                  filteredInbox.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-                        selectedItem?.id === item.id ? "bg-muted/50" : ""
-                      } ${!item.isRead ? "bg-primary/5" : ""}`}
-                      onClick={() => handleSelectItem(item)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarFallback className={`text-xs ${!item.isRead ? "bg-primary/10 text-primary" : ""}`}>
-                            {getInitials(item.from)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className={`text-sm truncate ${!item.isRead ? "font-semibold" : ""}`}>
-                              {item.from}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              {getTypeIcon(item.type)}
-                              <button onClick={(e) => toggleStar(item.id, e)}>
-                                {item.isStarred ? (
-                                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                ) : (
-                                  <StarOff className="w-4 h-4 text-muted-foreground" />
-                                )}
-                              </button>
+                {filteredActivities.length > 0 ? (
+                  filteredActivities.map((item) => {
+                    const isRead = readIds.has(item.id);
+                    const isStarred = starredIds.has(item.id);
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                          selectedItem?.id === item.id ? "bg-muted/50" : ""
+                        } ${!isRead ? "bg-primary/5" : ""}`}
+                        onClick={() => handleSelectItem(item)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Avatar className="w-10 h-10">
+                            <AvatarFallback className={`text-xs ${!isRead ? "bg-primary/10 text-primary" : ""}`}>
+                              {getInitials(item.profiles?.full_name || "SY")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-sm truncate ${!isRead ? "font-semibold" : ""}`}>
+                                {item.profiles?.full_name || "System"}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                {getTypeIcon(item.action_type)}
+                                <button onClick={(e) => toggleStar(item.id, e)}>
+                                  {isStarred ? (
+                                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                                  ) : (
+                                    <StarOff className="w-4 h-4 text-muted-foreground" />
+                                  )}
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                          <p className={`text-sm truncate ${!item.isRead ? "font-medium" : "text-muted-foreground"}`}>
-                            {item.subject}
-                          </p>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-                              {item.preview}
+                            <p className={`text-sm truncate ${!isRead ? "font-medium" : "text-muted-foreground"}`}>
+                              {item.action}
                             </p>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {item.timestamp}
-                            </span>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                {item.projects?.name || "General"}
+                              </p>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="p-8 text-center">
                     <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="font-semibold mb-1">No messages</h3>
+                    <h3 className="font-semibold mb-1">No activities</h3>
                     <p className="text-sm text-muted-foreground">
                       Your inbox is empty
                     </p>
@@ -296,18 +287,17 @@ const AdminInbox = () => {
                     <div className="flex items-center gap-3">
                       <Avatar className="w-12 h-12">
                         <AvatarFallback className="bg-primary/10 text-primary">
-                          {getInitials(selectedItem.from)}
+                          {getInitials(selectedItem.profiles?.full_name || "SY")}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold">{selectedItem.from}</h3>
-                        <p className="text-sm text-muted-foreground">{selectedItem.fromEmail}</p>
+                        <h3 className="font-semibold">{selectedItem.profiles?.full_name || "System"}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedItem.profiles?.email || "system@smait.com"}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => archiveItem(selectedItem.id)}>
-                        <Archive className="w-4 h-4" />
-                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteItem(selectedItem.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -316,34 +306,33 @@ const AdminInbox = () => {
                 </div>
                 <div className="p-6 flex-1">
                   <div className="flex items-center gap-2 mb-4">
-                    <h2 className="text-xl font-semibold">{selectedItem.subject}</h2>
-                    {selectedItem.type !== "message" && (
-                      <Badge variant={selectedItem.type === "alert" ? "destructive" : "secondary"}>
-                        {selectedItem.type}
-                      </Badge>
-                    )}
+                    <h2 className="text-xl font-semibold">{selectedItem.action}</h2>
+                    <Badge variant="secondary" className="capitalize">
+                      {selectedItem.action_type}
+                    </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
                     <Clock className="w-4 h-4" />
-                    {selectedItem.timestamp}
+                    {formatDistanceToNow(new Date(selectedItem.created_at), { addSuffix: true })}
                   </div>
+                  {selectedItem.projects?.name && (
+                    <div className="p-4 rounded-lg bg-muted/50 mb-4">
+                      <p className="text-sm text-muted-foreground">Related Project</p>
+                      <p className="font-medium">{selectedItem.projects.name}</p>
+                    </div>
+                  )}
                   <p className="text-muted-foreground leading-relaxed">
-                    {selectedItem.preview}
+                    This activity was recorded on {new Date(selectedItem.created_at).toLocaleString()}.
                   </p>
-                </div>
-                <div className="p-4 border-t">
-                  <Button variant="gradient" className="w-full">
-                    Reply
-                  </Button>
                 </div>
               </div>
             ) : (
               <div className="h-[600px] flex items-center justify-center">
                 <div className="text-center">
                   <MailOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-semibold mb-1">Select a message</h3>
+                  <h3 className="font-semibold mb-1">Select an activity</h3>
                   <p className="text-sm text-muted-foreground">
-                    Choose a message from the list to read
+                    Choose an item from the list to view details
                   </p>
                 </div>
               </div>
