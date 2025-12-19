@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import loginBackground from "@/assets/login-background.jpg";
@@ -52,7 +54,7 @@ const Login = () => {
         style={{ backgroundImage: `url(${loginBackground})` }}
       />
       {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* Back to home arrow */}
       <a 
@@ -63,24 +65,19 @@ const Login = () => {
         <span className="text-sm font-medium">Back to Home</span>
       </a>
 
-      {/* Glassmorphism Login Card */}
+      {/* Login Card - Dashboard Style */}
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-8 shadow-2xl">
-          {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Sign in</h2>
-            <div className="w-12 h-1 bg-primary rounded-full mb-4" />
-            <p className="text-white/70 text-sm">
-              Enter your email address below and we will sign you into your workspace.
+        <Card className="shadow-2xl border-border">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
+            <p className="text-sm text-muted-foreground text-center">
+              Enter your credentials to access your workspace
             </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-1">
-              <label className="text-white/60 text-xs uppercase tracking-wider">Your email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -88,56 +85,59 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 pl-11 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary rounded-lg"
+                  className="h-11"
                 />
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="text-white/60 text-xs uppercase tracking-wider">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="h-12 pl-11 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-11 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button type="button" className="text-sm text-primary hover:underline">
+                  Forgot password?
                 </button>
               </div>
-            </div>
 
-            <div className="flex items-center justify-end">
               <Button
                 type="submit"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 rounded-lg"
+                className="w-full h-11"
                 disabled={isLoading}
               >
-                {isLoading ? "Please wait..." : "Sign in"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
-            </div>
-          </form>
-
-          {/* Forgot password */}
-          <div className="text-center mt-6">
-            <button type="button" className="text-sm text-white/50 hover:text-white/70 transition-colors">
-              Forgot password?
-            </button>
-          </div>
-        </div>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Bottom text */}
-        <p className="text-center text-sm text-white/60 mt-6">
-          Don't have an account? Contact the admin of this space.{" "}
+        <p className="text-center text-sm text-white/70 mt-6">
+          Don't have an account? Contact the admin.{" "}
           <a
             href="https://www.smait.co.za"
             className="font-semibold text-white hover:underline transition-colors"
