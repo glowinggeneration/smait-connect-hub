@@ -12,6 +12,10 @@ import AdminMessages from "./pages/admin/AdminMessages";
 import AdminDocuments from "./pages/admin/AdminDocuments";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminProjectDetail from "./pages/admin/AdminProjectDetail";
+import AdminTasks from "./pages/admin/AdminTasks";
+import AdminInbox from "./pages/admin/AdminInbox";
+import AdminStandups from "./pages/admin/AdminStandups";
+import AdminMeetings from "./pages/admin/AdminMeetings";
 import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientProjects from "./pages/client/ClientProjects";
 import ClientMessages from "./pages/client/ClientMessages";
@@ -31,14 +35,17 @@ const App = () => (
           <Route path="/" element={<Login />} />
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/tasks" element={<AdminDashboard />} />
+          <Route path="/admin/tasks" element={<AdminTasks />} />
+          <Route path="/admin/inbox" element={<AdminInbox />} />
+          <Route path="/admin/standups" element={<AdminStandups />} />
+          <Route path="/admin/meetings" element={<AdminMeetings />} />
           <Route path="/admin/projects" element={<AdminProjects />} />
           <Route path="/admin/clients" element={<AdminClients />} />
           <Route path="/admin/messages" element={<AdminMessages />} />
           <Route path="/admin/documents" element={<AdminDocuments />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/standups" element={<AdminDashboard />} />
-          <Route path="/admin/meetings" element={<AdminDashboard />} />
+          <Route path="/admin/project/:id" element={<AdminProjectDetail />} />
+          <Route path="/admin/client/:clientId" element={<AdminClientDetail />} />
           <Route path="/admin/project/:id" element={<AdminProjectDetail />} />
           <Route path="/admin/client/:clientId" element={<AdminClientDetail />} />
           {/* Client Routes */}
