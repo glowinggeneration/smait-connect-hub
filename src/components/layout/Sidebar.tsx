@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +16,17 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import smaitLogo from "@/assets/smait-logo.png";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SidebarProps {
   userType: "admin" | "client";
+}
+
+interface UserProfile {
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+  company: string | null;
 }
 
 const adminNavItems = [
@@ -50,10 +58,62 @@ export const Sidebar = ({ userType }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const navItems = userType === "admin" ? adminNavItems : clientNavItems;
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email, avatar_url, company")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile) {
+        setUserProfile(profile);
+      }
+
+      // Fetch role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (roleData) {
+        setUserRole(roleData.role);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getRoleLabel = () => {
+    if (userRole === "admin") return "Administrator";
+    if (userRole === "client") return userProfile?.company || "Client";
+    return "User";
   };
 
   return (
@@ -63,12 +123,17 @@ export const Sidebar = ({ userType }: SidebarProps) => {
         {/* User Profile */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-amber-200 to-amber-400 flex items-center justify-center">
-              <span className="text-lg font-semibold text-amber-800">AR</span>
-            </div>
+            <Avatar className="w-12 h-12">
+              <AvatarImage src={userProfile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-gradient-to-br from-amber-200 to-amber-400 text-amber-800">
+                {getInitials(userProfile?.full_name || "U")}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-foreground">AR Shakir</p>
-              <p className="text-sm text-primary">Sr. Visual Designer</p>
+              <p className="font-semibold text-foreground truncate">
+                {userProfile?.full_name || "Loading..."}
+              </p>
+              <p className="text-sm text-primary truncate">{getRoleLabel()}</p>
             </div>
           </div>
         </div>
