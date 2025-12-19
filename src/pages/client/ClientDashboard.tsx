@@ -10,8 +10,7 @@ import {
   FolderKanban,
   MessageSquare,
   CheckCircle2,
-  Send,
-  Upload,
+  Plus,
   Clock,
 } from "lucide-react";
 
@@ -81,16 +80,10 @@ const ClientDashboard = () => {
               </p>
             </div>
             
-            <div className="flex items-center gap-3">
-              <Button variant="outline">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Files
-              </Button>
-              <Button variant="gradient">
-                <Send className="w-4 h-4 mr-2" />
-                Message Team
-              </Button>
-            </div>
+            <Button variant="gradient" onClick={() => window.location.href = '/client/new-brief'}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Brief
+            </Button>
           </div>
 
           {/* Stats Row */}
