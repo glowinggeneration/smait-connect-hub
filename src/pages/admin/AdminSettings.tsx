@@ -207,8 +207,22 @@ const AdminSettings = () => {
   return (
     <DashboardLayout userType={isClient ? "client" : "admin"}>
       <div className="space-y-6 max-w-4xl">
+        {/* User Profile Header */}
+        <div className="flex items-center gap-4 pb-4 border-b">
+          <Avatar className="w-16 h-16">
+            <AvatarImage src={profile?.avatar_url || undefined} />
+            <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+              {getInitials(profile?.full_name || "U")}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-2xl font-bold">{profile?.full_name || "User"}</h1>
+            <p className="text-muted-foreground">{profile?.email}</p>
+          </div>
+        </div>
+
         <div>
-          <h1 className="text-2xl font-bold">Settings</h1>
+          <h2 className="text-xl font-semibold">Settings</h2>
           <p className="text-muted-foreground">
             Manage your account and preferences
           </p>
