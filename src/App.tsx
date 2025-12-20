@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProjects from "./pages/admin/AdminProjects";
@@ -18,6 +17,7 @@ import AdminInbox from "./pages/admin/AdminInbox";
 import AdminStandups from "./pages/admin/AdminStandups";
 import AdminMeetings from "./pages/admin/AdminMeetings";
 import AdminBriefs from "./pages/admin/AdminBriefs";
+import AdminTools from "./pages/admin/AdminTools";
 import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientProjects from "./pages/client/ClientProjects";
 import ClientMessages from "./pages/client/ClientMessages";
@@ -26,11 +26,16 @@ import ClientNewBrief from "./pages/client/ClientNewBrief";
 import ClientNotifications from "./pages/client/ClientNotifications";
 import ClientProjectDetail from "./pages/client/ClientProjectDetail";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+const App = () => {
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
+
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -47,6 +52,7 @@ const App = () => (
             <Route path="/admin/meetings" element={<AdminMeetings />} />
             <Route path="/admin/projects" element={<AdminProjects />} />
             <Route path="/admin/briefs" element={<AdminBriefs />} />
+            <Route path="/admin/tools" element={<AdminTools />} />
             <Route path="/admin/clients" element={<AdminClients />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
             <Route path="/admin/documents" element={<AdminDocuments />} />
@@ -67,7 +73,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  </ThemeProvider>
-);
+  );
+};
 
 export default App;

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -16,11 +15,9 @@ import {
   Calendar,
   Plus,
   Bell,
-  Moon,
-  Sun,
   Menu,
-  X,
   Home,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,6 +43,7 @@ const adminNavItems = [
   { icon: Clock, label: "Standups", path: "/admin/standups" },
   { icon: Calendar, label: "Meetings", path: "/admin/meetings" },
   { icon: Users, label: "Clients", path: "/admin/clients" },
+  { icon: Wrench, label: "Tools", path: "/admin/tools" },
   { icon: Settings, label: "Settings", path: "/admin/settings" },
 ];
 
@@ -63,7 +61,7 @@ const adminBottomNav = [
   { icon: Home, label: "Home", path: "/admin" },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
   { icon: Inbox, label: "Tasks", path: "/admin/tasks" },
-  { icon: Users, label: "Clients", path: "/admin/clients" },
+  { icon: Wrench, label: "Tools", path: "/admin/tools" },
 ];
 
 const clientBottomNav = [
@@ -76,7 +74,6 @@ const clientBottomNav = [
 export const Sidebar = ({ userType }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
   const navItems = userType === "admin" ? adminNavItems : clientNavItems;
   const bottomNavItems = userType === "admin" ? adminBottomNav : clientBottomNav;
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -181,16 +178,8 @@ export const Sidebar = ({ userType }: SidebarProps) => {
         </nav>
       </div>
 
-      {/* Theme Toggle & Logout */}
-      <div className="px-3 py-4 border-t border-border/50 space-y-1">
-        <Button
-          variant="ghost"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground h-10 rounded-xl"
-        >
-          {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          <span className="text-sm">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-        </Button>
+      {/* Logout */}
+      <div className="px-3 py-4 border-t border-border/50">
         <Button
           variant="ghost"
           onClick={handleLogout}
