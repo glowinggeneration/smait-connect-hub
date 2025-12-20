@@ -46,10 +46,10 @@ const AdminTools = () => {
   const { data: tools, isLoading } = useQuery({
     queryKey: ["admin-tools"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tools")
+      const { data, error } = await (supabase
+        .from("tools" as any)
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) as any);
       
       if (error) throw error;
       return data as Tool[];
@@ -61,13 +61,13 @@ const AdminTools = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("tools").insert({
+      const { error } = await (supabase.from("tools" as any).insert({
         name: toolData.name,
         description: toolData.description || null,
         category: toolData.category,
         rating: toolData.rating,
         created_by: user.id
-      });
+      }) as any);
       
       if (error) throw error;
     },
@@ -76,20 +76,23 @@ const AdminTools = () => {
       toast.success("Tool added successfully");
       resetForm();
     },
-    onError: () => toast.error("Failed to add tool")
+    onError: (err) => {
+      console.error("Create tool error:", err);
+      toast.error("Failed to add tool");
+    }
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...toolData }: typeof formData & { id: string }) => {
-      const { error } = await supabase
-        .from("tools")
+      const { error } = await (supabase
+        .from("tools" as any)
         .update({
           name: toolData.name,
           description: toolData.description || null,
           category: toolData.category,
           rating: toolData.rating
         })
-        .eq("id", id);
+        .eq("id", id) as any);
       
       if (error) throw error;
     },
@@ -103,7 +106,7 @@ const AdminTools = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("tools").delete().eq("id", id);
+      const { error } = await (supabase.from("tools" as any).delete().eq("id", id) as any);
       if (error) throw error;
     },
     onSuccess: () => {
