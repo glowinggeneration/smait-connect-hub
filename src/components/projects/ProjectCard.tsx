@@ -58,16 +58,17 @@ export const ProjectCard = ({ project, onClick, compact = false }: ProjectCardPr
   if (compact) {
     return (
       <Card
+        variant="glass"
         className={cn(
-          "cursor-pointer group border hover:border-primary/30 transition-colors",
-          isOverdue && "border-destructive/20"
+          "cursor-pointer group border border-white/10 hover:border-primary/30 hover:bg-white/15 transition-colors",
+          isOverdue && "border-destructive/30"
         )}
         onClick={handleClick}
       >
         <CardContent className="p-4 space-y-3">
           {/* Header: Name + Status */}
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-sm leading-tight line-clamp-1">{project.name}</h3>
+            <h3 className="font-semibold text-sm leading-tight line-clamp-1 text-white">{project.name}</h3>
             <Badge variant={status.variant} className="text-[10px] px-1.5 py-0 h-5 shrink-0">
               {status.label}
             </Badge>
@@ -76,8 +77,8 @@ export const ProjectCard = ({ project, onClick, compact = false }: ProjectCardPr
           {/* Progress */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">{project.progress}%</span>
+              <span className="text-white/60">Progress</span>
+              <span className="font-medium text-white">{project.progress}%</span>
             </div>
             <Progress value={project.progress} variant="gradient" size="sm" className="h-1.5" />
           </div>
@@ -85,12 +86,12 @@ export const ProjectCard = ({ project, onClick, compact = false }: ProjectCardPr
           {/* Due Date */}
           {project.dueDate && (
             <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-white/60">
                 <Calendar className="w-3 h-3" />
                 <span>{format(parseISO(project.dueDate), "MMM d, yyyy")}</span>
               </div>
               {isOverdue && (
-                <span className="text-[10px] text-destructive/80 font-medium">
+                <span className="text-[10px] text-red-400 font-medium">
                   {Math.abs(daysRemaining)} days overdue
                 </span>
               )}

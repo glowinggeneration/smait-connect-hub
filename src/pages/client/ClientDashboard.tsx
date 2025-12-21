@@ -139,10 +139,10 @@ const ClientDashboard = () => {
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold text-white">
               Welcome back
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-white/60 text-sm">
               Track your projects and stay connected.
             </p>
           </div>
@@ -164,14 +164,14 @@ const ClientDashboard = () => {
             <button
               key={stat.label}
               onClick={() => navigate(stat.href)}
-              className={`flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl border border-border/50 bg-card hover:bg-muted/30 transition-all text-center sm:text-left group animate-fade-in stagger-${index + 1}`}
+              className={`flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl border border-white/10 bg-black/30 backdrop-blur-xl hover:bg-white/10 transition-all text-center sm:text-left group animate-fade-in stagger-${index + 1}`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${stat.color}`}>
                 <stat.icon className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-xl sm:text-2xl font-bold leading-none">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold leading-none text-white">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-white/60 mt-0.5">{stat.label}</p>
               </div>
             </button>
           ))}
@@ -180,21 +180,21 @@ const ClientDashboard = () => {
         {/* Projects */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Your Projects</h2>
+            <h2 className="text-base font-semibold text-white">Your Projects</h2>
             {projects.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => navigate("/client/projects")} className="text-muted-foreground hover:text-foreground h-8 px-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/client/projects")} className="text-white/60 hover:text-white hover:bg-white/10 h-8 px-2">
                 View all <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             )}
           </div>
           
           {projects.length === 0 ? (
-            <Card className="border-dashed border-2">
+            <Card variant="glass" className="border-dashed border-2 border-white/20">
               <CardContent className="py-10 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                  <FolderKanban className="w-7 h-7 text-muted-foreground/50" />
+                <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4">
+                  <FolderKanban className="w-7 h-7 text-white/50" />
                 </div>
-                <p className="text-muted-foreground text-sm mb-4">No projects yet</p>
+                <p className="text-white/60 text-sm mb-4">No projects yet</p>
                 <Button
                   variant="gradient"
                   size="sm"
@@ -242,17 +242,17 @@ const ClientDashboard = () => {
         {activities.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-base font-semibold flex items-center gap-2 text-white">
+                <Clock className="w-4 h-4 text-white/60" />
                 Recent Activity
               </h2>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/client/notifications")} className="text-muted-foreground hover:text-foreground h-8 px-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/client/notifications")} className="text-white/60 hover:text-white hover:bg-white/10 h-8 px-2">
                 View all <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             </div>
             
-            <Card>
-              <CardContent className="p-3 sm:p-4 divide-y divide-border/50">
+            <Card variant="glass">
+              <CardContent className="p-3 sm:p-4 divide-y divide-white/10">
                 {activities.slice(0, 4).map((activity, index) => (
                   <div 
                     key={activity.id} 
@@ -260,8 +260,8 @@ const ClientDashboard = () => {
                   >
                     <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm leading-relaxed">
-                        <span className="font-medium">{activity.action}</span>
+                      <p className="text-sm leading-relaxed text-white/90">
+                        <span className="font-medium text-white">{activity.action}</span>
                         {activity.projects?.name && (
                           <>
                             {" in "}
@@ -269,7 +269,7 @@ const ClientDashboard = () => {
                           </>
                         )}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-white/50 mt-0.5">
                         {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                       </p>
                     </div>

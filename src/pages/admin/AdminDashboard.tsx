@@ -170,12 +170,12 @@ const AdminDashboard = () => {
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Overview</h1>
-            <p className="text-muted-foreground text-sm lg:text-base mt-1">
+            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-white">Overview</h1>
+            <p className="text-white/60 text-sm lg:text-base mt-1">
               Welcome back! Here's what's happening with your projects.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-white/70 bg-white/10 backdrop-blur-xl px-3 py-1.5 rounded-lg border border-white/10">
             <Calendar className="w-4 h-4" />
             {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
           </div>
@@ -185,8 +185,9 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {stats.map((stat, index) => (
             <Card 
-              key={stat.title} 
-              className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 animate-fade-in"
+              key={stat.title}
+              variant="glass"
+              className="hover:bg-white/15 transition-all duration-200 hover:-translate-y-0.5 animate-fade-in"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <CardContent className="p-4 lg:p-5">
@@ -197,8 +198,8 @@ const AdminDashboard = () => {
                   <TrendingUp className="w-4 h-4 text-emerald-500" />
                 </div>
                 <div className="mt-3 lg:mt-4">
-                  <p className="text-2xl lg:text-3xl font-bold">{stat.value}</p>
-                  <p className="text-xs lg:text-sm text-muted-foreground mt-0.5">{stat.title}</p>
+                  <p className="text-2xl lg:text-3xl font-bold text-white">{stat.value}</p>
+                  <p className="text-xs lg:text-sm text-white/60 mt-0.5">{stat.title}</p>
                 </div>
               </CardContent>
             </Card>
@@ -208,24 +209,25 @@ const AdminDashboard = () => {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Project Progress Chart */}
-          <Card className="lg:col-span-2">
+          <Card variant="glass" className="lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base lg:text-lg">Project Progress</CardTitle>
+              <CardTitle className="text-base lg:text-lg text-white">Project Progress</CardTitle>
             </CardHeader>
             <CardContent>
               {projectProgressData.length > 0 ? (
                 <div className="h-[260px] lg:h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={projectProgressData} layout="vertical" margin={{ left: 0, right: 16 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                      <XAxis type="number" domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
-                      <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={11} width={90} tickLine={false} axisLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
+                      <XAxis type="number" domain={[0, 100]} stroke="rgba(255,255,255,0.5)" fontSize={11} tickLine={false} />
+                      <YAxis dataKey="name" type="category" stroke="rgba(255,255,255,0.5)" fontSize={11} width={90} tickLine={false} axisLine={false} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
+                          backgroundColor: "rgba(0,0,0,0.8)",
+                          border: "1px solid rgba(255,255,255,0.2)",
                           borderRadius: "8px",
                           fontSize: "12px",
+                          color: "#fff",
                         }}
                         formatter={(value: number) => [`${value}%`, "Progress"]}
                       />
@@ -234,7 +236,7 @@ const AdminDashboard = () => {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">
+                <div className="h-[260px] flex items-center justify-center text-white/50 text-sm">
                   No projects yet. Create your first project to see progress.
                 </div>
               )}
@@ -242,9 +244,9 @@ const AdminDashboard = () => {
           </Card>
 
           {/* Task Status Pie Chart */}
-          <Card>
+          <Card variant="glass">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base lg:text-lg">Task Distribution</CardTitle>
+              <CardTitle className="text-base lg:text-lg text-white">Task Distribution</CardTitle>
             </CardHeader>
             <CardContent>
               {taskStatusData.length > 0 ? (
@@ -267,10 +269,11 @@ const AdminDashboard = () => {
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "rgba(0,0,0,0.8)",
+                            border: "1px solid rgba(255,255,255,0.2)",
                             borderRadius: "8px",
                             fontSize: "12px",
+                            color: "#fff",
                           }}
                         />
                       </PieChart>
@@ -280,14 +283,14 @@ const AdminDashboard = () => {
                     {taskStatusData.map((item) => (
                       <div key={item.name} className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        <span className="text-xs text-muted-foreground truncate">{item.name}</span>
-                        <span className="text-xs font-semibold ml-auto">{item.value}</span>
+                        <span className="text-xs text-white/60 truncate">{item.name}</span>
+                        <span className="text-xs font-semibold ml-auto text-white">{item.value}</span>
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
-                <div className="h-[180px] flex items-center justify-center text-muted-foreground text-sm">
+                <div className="h-[180px] flex items-center justify-center text-white/50 text-sm">
                   No tasks yet
                 </div>
               )}
@@ -298,9 +301,9 @@ const AdminDashboard = () => {
         {/* Second Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Recent Activity */}
-          <Card className="lg:col-span-2">
+          <Card variant="glass" className="lg:col-span-2">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base lg:text-lg flex items-center gap-2">
+              <CardTitle className="text-base lg:text-lg flex items-center gap-2 text-white">
                 <Clock className="w-4 h-4 text-primary" />
                 Recent Activity
               </CardTitle>
@@ -311,18 +314,18 @@ const AdminDashboard = () => {
                   {activities.map((activity, index) => (
                     <div 
                       key={activity.id} 
-                      className="flex gap-3 p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors animate-fade-in"
+                      className="flex gap-3 p-2 -mx-2 rounded-lg hover:bg-white/5 transition-colors animate-fade-in"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-white/70">
                         {getActivityIcon(activity.action_type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="font-medium">{activity.profiles?.full_name || "Unknown"}</span>{" "}
-                          <span className="text-muted-foreground">{activity.action}</span>
+                        <p className="text-sm text-white/90">
+                          <span className="font-medium text-white">{activity.profiles?.full_name || "Unknown"}</span>{" "}
+                          <span className="text-white/60">{activity.action}</span>
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-white/50 mt-0.5">
                           {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                         </p>
                       </div>
@@ -330,7 +333,7 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm">
+                <div className="text-center py-8 text-white/50 text-sm">
                   No recent activity
                 </div>
               )}
@@ -338,9 +341,9 @@ const AdminDashboard = () => {
           </Card>
 
           {/* Upcoming Deadlines */}
-          <Card>
+          <Card variant="glass">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base lg:text-lg flex items-center gap-2">
+              <CardTitle className="text-base lg:text-lg flex items-center gap-2 text-white">
                 <Target className="w-4 h-4 text-primary" />
                 Upcoming Deadlines
               </CardTitle>
@@ -350,22 +353,22 @@ const AdminDashboard = () => {
                 upcomingDeadlines.map((deadline, index) => (
                   <div
                     key={deadline.id}
-                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors animate-fade-in"
+                    className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors animate-fade-in"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{deadline.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{deadline.project}</p>
+                        <p className="text-sm font-medium truncate text-white">{deadline.title}</p>
+                        <p className="text-xs text-white/50 truncate">{deadline.project}</p>
                       </div>
                       <Badge
                         variant="outline"
                         className={`shrink-0 text-[10px] ${
                           deadline.priority === "high"
-                            ? "border-destructive/30 bg-destructive/10 text-destructive"
+                            ? "border-destructive/50 bg-destructive/20 text-red-400"
                             : deadline.priority === "medium"
-                            ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
-                            : "border-muted-foreground/30 bg-muted text-muted-foreground"
+                            ? "border-amber-500/50 bg-amber-500/20 text-amber-400"
+                            : "border-white/30 bg-white/10 text-white/70"
                         }`}
                       >
                         {deadline.date}
@@ -374,7 +377,7 @@ const AdminDashboard = () => {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm">
+                <div className="text-center py-8 text-white/50 text-sm">
                   No upcoming deadlines
                 </div>
               )}
@@ -383,9 +386,9 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Projects */}
-        <Card>
+        <Card variant="glass">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base lg:text-lg">Recent Projects</CardTitle>
+            <CardTitle className="text-base lg:text-lg text-white">Recent Projects</CardTitle>
             <Link to="/admin/projects" className="text-sm text-primary hover:underline flex items-center gap-1">
               View all <ArrowUpRight className="w-3 h-3" />
             </Link>
@@ -397,7 +400,7 @@ const AdminDashboard = () => {
                   <Link
                     to={`/admin/projects/${project.id}`}
                     key={project.id}
-                    className="p-4 rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer animate-fade-in group"
+                    className="p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-primary/30 transition-all cursor-pointer animate-fade-in group"
                     style={{ animationDelay: `${index * 75}ms` }}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -405,18 +408,18 @@ const AdminDashboard = () => {
                         variant="outline"
                         className={`text-[10px] ${
                           project.status === "completed"
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                            ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400"
                             : project.status === "in-progress"
-                            ? "border-primary/30 bg-primary/10 text-primary"
-                            : "border-muted-foreground/30 bg-muted text-muted-foreground"
+                            ? "border-primary/50 bg-primary/20 text-primary"
+                            : "border-white/30 bg-white/10 text-white/70"
                         }`}
                       >
                         {project.status === "completed" ? "Done" : project.status === "in-progress" ? "Active" : project.status}
                       </Badge>
                       <span className="text-sm font-bold text-primary">{project.progress}%</span>
                     </div>
-                    <h3 className="font-medium mb-1 line-clamp-1 group-hover:text-primary transition-colors">{project.name}</h3>
-                    <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
+                    <h3 className="font-medium mb-1 line-clamp-1 group-hover:text-primary transition-colors text-white">{project.name}</h3>
+                    <p className="text-xs text-white/50 mb-3 line-clamp-1">
                       {clients.find((c) => c.user_id === project.client_id)?.full_name || "No client"}
                     </p>
                     <Progress value={project.progress} variant="gradient" className="h-1.5" />
@@ -424,7 +427,7 @@ const AdminDashboard = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
+              <div className="text-center py-12 text-white/50">
                 <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No projects yet. Create your first project to get started.</p>
               </div>
