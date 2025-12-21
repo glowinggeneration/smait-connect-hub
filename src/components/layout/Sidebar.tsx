@@ -136,16 +136,16 @@ export const Sidebar = ({ userType }: SidebarProps) => {
   const NavContent = () => (
     <>
       {/* User Profile */}
-      <div className="p-5 border-b border-border/50">
+      <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <Avatar className="w-11 h-11 ring-2 ring-primary/20">
+          <Avatar className="w-11 h-11 ring-2 ring-white/20">
             <AvatarImage src={userProfile?.avatar_url || undefined} />
-            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold">
+            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/60 text-white font-semibold">
               {getInitials(userProfile?.full_name || "U")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground truncate text-sm">
+            <p className="font-semibold text-white truncate text-sm">
               {userProfile?.full_name || "Loading..."}
             </p>
             <p className="text-xs text-primary truncate">{getRoleLabel()}</p>
@@ -155,7 +155,7 @@ export const Sidebar = ({ userType }: SidebarProps) => {
 
       {/* Menu Section */}
       <div className="flex-1 py-3 px-3 overflow-y-auto">
-        <nav className="space-y-0.5">
+        <nav className="space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -166,8 +166,8 @@ export const Sidebar = ({ userType }: SidebarProps) => {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group",
                   isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "bg-white/10 text-white font-medium backdrop-blur-sm"
+                    : "text-white/70 hover:text-white hover:bg-white/5"
                 )}
               >
                 <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-primary")} />
@@ -179,11 +179,11 @@ export const Sidebar = ({ userType }: SidebarProps) => {
       </div>
 
       {/* Logout */}
-      <div className="px-3 py-4 border-t border-border/50">
+      <div className="px-3 py-4 border-t border-white/10">
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 rounded-xl"
+          className="w-full justify-start gap-3 text-white/70 hover:text-red-400 hover:bg-red-500/10 h-10 rounded-xl"
         >
           <LogOut className="w-5 h-5" />
           <span className="text-sm">Logout</span>
@@ -195,32 +195,32 @@ export const Sidebar = ({ userType }: SidebarProps) => {
   return (
     <>
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card/95 backdrop-blur-lg border-b border-border/50 z-50 flex items-center justify-between px-4 safe-area-top">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-black/40 backdrop-blur-xl border-b border-white/10 z-50 flex items-center justify-between px-4 safe-area-top">
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-white hover:bg-white/10">
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0 flex flex-col">
+          <SheetContent side="left" className="w-72 p-0 flex flex-col bg-black/60 backdrop-blur-2xl border-white/10">
             <NavContent />
           </SheetContent>
         </Sheet>
 
-        <h1 className="font-semibold text-foreground">
+        <h1 className="font-semibold text-white">
           {userType === "admin" ? "SMAIT Admin" : "SMAIT Portal"}
         </h1>
 
         <Avatar className="w-8 h-8">
           <AvatarImage src={userProfile?.avatar_url || undefined} />
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary text-xs font-semibold">
+          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/60 text-white text-xs font-semibold">
             {getInitials(userProfile?.full_name || "U")}
           </AvatarFallback>
         </Avatar>
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-lg border-t border-border/50 z-50 flex items-center justify-around px-2 safe-area-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/40 backdrop-blur-xl border-t border-white/10 z-50 flex items-center justify-around px-2 safe-area-bottom">
         {bottomNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -231,12 +231,12 @@ export const Sidebar = ({ userType }: SidebarProps) => {
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all min-w-[60px]",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground"
+                  : "text-white/60"
               )}
             >
               <div className={cn(
                 "p-1.5 rounded-xl transition-all",
-                isActive && "bg-primary/10"
+                isActive && "bg-primary/20"
               )}>
                 <item.icon className="w-5 h-5" />
               </div>
@@ -247,7 +247,7 @@ export const Sidebar = ({ userType }: SidebarProps) => {
       </nav>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col bg-card border-r border-border/50 transition-all duration-300 fixed left-0 top-0 bottom-0 z-40 w-60">
+      <aside className="hidden lg:flex flex-col bg-black/40 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 fixed left-0 top-0 bottom-0 z-40 w-64">
         <NavContent />
       </aside>
     </>
