@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProjectPhasesView } from "@/components/projects/ProjectPhasesView";
 import { ProjectOverview } from "@/components/projects/ProjectOverview";
+import { ProjectMilestones } from "@/components/projects/ProjectMilestones";
 import { mockProject, Project, defaultPhases } from "@/types/project";
 import { useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Layers, FileText, MessageSquare, Loader2 } from "lucide-react";
+import { LayoutDashboard, Layers, FileText, MessageSquare, Loader2, Milestone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -190,6 +191,10 @@ const AdminProjectDetail = () => {
               <LayoutDashboard className="w-4 h-4" />
               Overview
             </TabsTrigger>
+            <TabsTrigger value="milestones" className="flex items-center gap-2">
+              <Milestone className="w-4 h-4" />
+              Milestones
+            </TabsTrigger>
             <TabsTrigger value="phases" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               Phases
@@ -210,6 +215,10 @@ const AdminProjectDetail = () => {
               isAdmin={true}
               onBack={() => navigate("/admin/projects")}
             />
+          </TabsContent>
+
+          <TabsContent value="milestones">
+            <ProjectMilestones projectId={project.id} isAdmin={true} />
           </TabsContent>
 
           <TabsContent value="phases">

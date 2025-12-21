@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProjectOverview } from "@/components/projects/ProjectOverview";
+import { ProjectMilestones } from "@/components/projects/ProjectMilestones";
 import { Project, defaultPhases } from "@/types/project";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, LayoutDashboard, Milestone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ClientProjectDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     if (id) {
@@ -114,11 +117,32 @@ const ClientProjectDetail = () => {
 
   return (
     <DashboardLayout userType="client">
-      <ProjectOverview
-        project={project}
-        isAdmin={false}
-        onBack={() => navigate("/client/projects")}
-      />
+      <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="milestones" className="flex items-center gap-2">
+              <Milestone className="w-4 h-4" />
+              Milestones
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <ProjectOverview
+              project={project}
+              isAdmin={false}
+              onBack={() => navigate("/client/projects")}
+            />
+          </TabsContent>
+
+          <TabsContent value="milestones">
+            <ProjectMilestones projectId={project.id} isAdmin={false} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </DashboardLayout>
   );
 };
