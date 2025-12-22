@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import loginBackground from "@/assets/login-background.jpg";
+import marsBackground from "@/assets/mars-background.jpg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,13 +46,14 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden safe-area-top safe-area-bottom">
-      {/* Full screen background image with animation */}
+      {/* Mars space background */}
       <div 
-        className="absolute inset-[-20%] bg-cover bg-center bg-no-repeat animate-bg-pan"
-        style={{ backgroundImage: `url(${loginBackground})` }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${marsBackground})` }}
       />
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+      {/* Space overlay with stars effect */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="absolute inset-0 stars-overlay" />
 
       {/* Back to home arrow */}
       <a 
