@@ -98,6 +98,13 @@
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 0 0% 100%;
     --sidebar-ring: 350 89% 60%;
+
+    /* Space-themed chart colors */
+    --chart-1: 350 89% 60%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 200 95% 55%;
+    --chart-4: 35 95% 55%;
+    --chart-5: 280 80% 60%;
   }
 }
 
