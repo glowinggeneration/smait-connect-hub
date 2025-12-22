@@ -15,6 +15,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -25,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProjectProgressSlider } from "@/components/projects/ProjectProgressSlider";
-import { Plus, Search, FolderKanban, Loader2, Calendar } from "lucide-react";
+import { Plus, Search, FolderKanban, Loader2, Calendar, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, differenceInDays, parseISO } from "date-fns";
@@ -62,6 +73,7 @@ const AdminProjects = () => {
     client_id: "",
     due_date: "",
   });
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -252,6 +264,34 @@ const AdminProjects = () => {
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string, projectName: string) => {
+    setDeletingProjectId(projectId);
+    try {
+      // Delete related data first (milestones, activities, etc.)
+      await supabase.from("project_milestones").delete().eq("project_id", projectId);
+      await supabase.from("activities").delete().eq("project_id", projectId);
+      await supabase.from("tasks").delete().eq("project_id", projectId);
+      await supabase.from("project_team").delete().eq("project_id", projectId);
+
+      // Delete the project
+      const { error } = await supabase.from("projects").delete().eq("id", projectId);
+      if (error) throw error;
+
+      toast({
+        title: "Project Deleted",
+        description: `${projectName} has been deleted successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingProjectId(null);
     }
   };
 
@@ -467,6 +507,36 @@ const AdminProjects = () => {
                         >
                           <div className="flex items-center justify-between mb-3">
                             {getStatusBadge(project.status)}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{project.name}"? This will also delete all milestones, tasks, and activities associated with this project. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteProject(project.id, project.name)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    disabled={deletingProjectId === project.id}
+                                  >
+                                    {deletingProjectId === project.id ? "Deleting..." : "Delete"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                           <h3 className="font-semibold mb-1 line-clamp-1">{project.name}</h3>
                           <p className="text-sm text-muted-foreground mb-3">
