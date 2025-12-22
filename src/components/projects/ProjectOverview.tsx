@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Calendar,
@@ -20,6 +22,9 @@ import {
   Circle,
   AlertCircle,
   PlayCircle,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,15 +47,20 @@ interface ProjectOverviewProps {
   project: Project;
   isAdmin: boolean;
   onBack?: () => void;
+  onProjectUpdate?: (updatedProject: Project) => void;
 }
 
 export const ProjectOverview = ({
   project,
   isAdmin,
   onBack,
+  onProjectUpdate,
 }: ProjectOverviewProps) => {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(project.name);
+  const [isSavingName, setIsSavingName] = useState(false);
 
   useEffect(() => {
     fetchTeam();
@@ -91,6 +101,48 @@ export const ProjectOverview = ({
         type: activity.action_type as Activity["type"] || "update",
       }));
       setActivities(formattedActivities);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!editedName.trim() || editedName === project.name) {
+      setIsEditingName(false);
+      setEditedName(project.name);
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({ name: editedName.trim(), updated_at: new Date().toISOString() })
+        .eq("id", project.id);
+
+      if (error) throw error;
+
+      // Log activity
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("activities").insert({
+          user_id: user.id,
+          project_id: project.id,
+          action: `Renamed project to "${editedName.trim()}"`,
+          action_type: "update",
+        });
+      }
+
+      // Update parent state
+      if (onProjectUpdate) {
+        onProjectUpdate({ ...project, name: editedName.trim() });
+      }
+
+      toast.success("Project name updated");
+      setIsEditingName(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update project name");
+      setEditedName(project.name);
+    } finally {
+      setIsSavingName(false);
     }
   };
 
@@ -158,7 +210,44 @@ export const ProjectOverview = ({
           )}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{project.name}</h1>
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="text-xl font-bold h-10 w-64 bg-background/50"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveName();
+                      if (e.key === "Escape") {
+                        setIsEditingName(false);
+                        setEditedName(project.name);
+                      }
+                    }}
+                    disabled={isSavingName}
+                  />
+                  <Button size="icon" variant="ghost" onClick={handleSaveName} disabled={isSavingName}>
+                    <Check className="w-4 h-4 text-emerald-500" />
+                  </Button>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => { setIsEditingName(false); setEditedName(project.name); }}
+                    disabled={isSavingName}
+                  >
+                    <X className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold">{project.name}</h1>
+                  {isAdmin && (
+                    <Button size="icon" variant="ghost" onClick={() => setIsEditingName(true)} className="h-8 w-8">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  )}
+                </>
+              )}
               <Badge className={cn("border", projectStatus.color)}>
                 {projectStatus.label}
               </Badge>

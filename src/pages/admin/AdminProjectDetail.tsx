@@ -214,6 +214,7 @@ const AdminProjectDetail = () => {
               project={project}
               isAdmin={true}
               onBack={() => navigate("/admin/projects")}
+              onProjectUpdate={(updated) => setProject(updated)}
             />
           </TabsContent>
 

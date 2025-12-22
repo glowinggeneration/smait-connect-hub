@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
-import loginBackground from "@/assets/login-background.jpg";
+import marsBackground from "@/assets/mars-background.jpg";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,12 +11,13 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen relative">
-      {/* Background Image with Blur */}
+      {/* Mars Space Background */}
       <div 
         className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
-        style={{ backgroundImage: `url(${loginBackground})` }}
+        style={{ backgroundImage: `url(${marsBackground})` }}
       />
-      <div className="fixed inset-0 bg-background/80 backdrop-blur-xl z-0" />
+      <div className="fixed inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70 backdrop-blur-sm z-0" />
+      <div className="fixed inset-0 stars-overlay z-0" />
       
       {/* Content */}
       <div className="relative z-10 min-h-screen">

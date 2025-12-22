@@ -249,3 +249,26 @@
     user-select: none;
   }
 }
+
+/* Space Stars Overlay Effect */
+.stars-overlay {
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.9), transparent),
+    radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px at 230px 80px, rgba(255,255,255,0.5), transparent),
+    radial-gradient(2px 2px at 300px 200px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 370px 150px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(2px 2px at 450px 50px, rgba(255,255,255,0.9), transparent),
+    radial-gradient(1px 1px at 520px 180px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(2px 2px at 600px 100px, rgba(255,255,255,0.5), transparent);
+  background-size: 650px 220px;
+  animation: twinkle 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
