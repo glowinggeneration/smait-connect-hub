@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, Plus, Star, Trash2, Wrench } from "lucide-react";
+import { Edit, Plus, Star, Trash2, Wrench, ExternalLink } from "lucide-react";
 
 interface Tool {
   id: string;
@@ -19,6 +19,7 @@ interface Tool {
   description: string | null;
   category: string;
   rating: number;
+  url: string | null;
   created_by: string;
   created_at: string;
 }
@@ -42,11 +43,13 @@ const AdminTools = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTool, setEditingTool] = useState<Tool | null>(null);
+  const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     category: "",
-    rating: 0
+    rating: 0,
+    url: ""
   });
 
   useEffect(() => {
@@ -93,6 +96,7 @@ const AdminTools = () => {
         description: toolData.description || null,
         category: toolData.category,
         rating: toolData.rating,
+        url: toolData.url || null,
         created_by: user.id
       }) as any);
       
@@ -117,7 +121,8 @@ const AdminTools = () => {
           name: toolData.name,
           description: toolData.description || null,
           category: toolData.category,
-          rating: toolData.rating
+          rating: toolData.rating,
+          url: toolData.url || null
         })
         .eq("id", id) as any);
       
@@ -144,7 +149,7 @@ const AdminTools = () => {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", category: "", rating: 0 });
+    setFormData({ name: "", description: "", category: "", rating: 0, url: "" });
     setEditingTool(null);
     setIsDialogOpen(false);
   };
@@ -169,8 +174,10 @@ const AdminTools = () => {
       name: tool.name,
       description: tool.description || "",
       category: tool.category,
-      rating: tool.rating
+      rating: tool.rating,
+      url: tool.url || ""
     });
+    setSelectedTool(null);
     setIsDialogOpen(true);
   };
 
@@ -267,6 +274,15 @@ const AdminTools = () => {
                 </div>
 
                 <div>
+                  <label className="text-sm font-medium mb-1 block">Tool Link</label>
+                  <Input
+                    value={formData.url}
+                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
                   <label className="text-sm font-medium mb-2 block">Rating</label>
                   {renderStars(formData.rating, true, (r) => setFormData({ ...formData, rating: r }))}
                 </div>
@@ -317,19 +333,34 @@ const AdminTools = () => {
                   </h2>
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                     {categoryTools.map((tool) => (
-                      <Card key={tool.id} className="group hover:border-primary/50 transition-colors">
+                      <Card 
+                        key={tool.id} 
+                        className="group hover:border-primary/50 transition-colors cursor-pointer"
+                        onClick={() => setSelectedTool(tool)}
+                      >
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
                             <CardTitle className="text-base">{tool.name}</CardTitle>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(tool)}>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(tool);
+                                }}
+                              >
                                 <Edit className="h-3.5 w-3.5" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
-                                onClick={() => deleteMutation.mutate(tool.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteMutation.mutate(tool.id);
+                                }}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
@@ -341,6 +372,12 @@ const AdminTools = () => {
                           {tool.description && (
                             <p className="text-sm text-muted-foreground line-clamp-2">{tool.description}</p>
                           )}
+                          {tool.url && (
+                            <div className="flex items-center gap-1 mt-2 text-xs text-primary">
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Link available</span>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))}
@@ -349,6 +386,56 @@ const AdminTools = () => {
               ))}
           </div>
         )}
+
+        {/* Tool Detail Popup */}
+        <Dialog open={!!selectedTool} onOpenChange={(open) => !open && setSelectedTool(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Wrench className="w-5 h-5" />
+                {selectedTool?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Category</p>
+                <Badge variant="secondary">{selectedTool?.category}</Badge>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Rating</p>
+                {renderStars(selectedTool?.rating || 0)}
+              </div>
+              {selectedTool?.description && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Description</p>
+                  <p className="text-sm">{selectedTool.description}</p>
+                </div>
+              )}
+              {selectedTool?.url && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Link</p>
+                  <a 
+                    href={selectedTool.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Open Tool
+                  </a>
+                </div>
+              )}
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" onClick={() => setSelectedTool(null)} className="flex-1">
+                  Close
+                </Button>
+                <Button onClick={() => handleEdit(selectedTool!)} className="flex-1">
+                  Edit Tool
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </section>
     </DashboardLayout>
   );

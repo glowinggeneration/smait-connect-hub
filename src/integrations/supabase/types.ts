@@ -91,6 +91,80 @@ export type Database = {
           },
         ]
       }
+      lead_assignees: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_assignees_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          company: string | null
+          contact_name: string
+          created_at: string
+          created_by: string
+          email: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          pitch_link: string | null
+          project_description: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          contact_name: string
+          created_at?: string
+          created_by: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          pitch_link?: string | null
+          project_description?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          contact_name?: string
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          pitch_link?: string | null
+          project_description?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           client_id: string
@@ -553,6 +627,7 @@ export type Database = {
           name: string
           rating: number | null
           updated_at: string
+          url: string | null
         }
         Insert: {
           category: string
@@ -563,6 +638,7 @@ export type Database = {
           name: string
           rating?: number | null
           updated_at?: string
+          url?: string | null
         }
         Update: {
           category?: string
@@ -573,6 +649,7 @@ export type Database = {
           name?: string
           rating?: number | null
           updated_at?: string
+          url?: string | null
         }
         Relationships: []
       }
