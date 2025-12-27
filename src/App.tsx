@@ -18,6 +18,7 @@ import AdminStandups from "./pages/admin/AdminStandups";
 import AdminMeetings from "./pages/admin/AdminMeetings";
 import AdminBriefs from "./pages/admin/AdminBriefs";
 import AdminTools from "./pages/admin/AdminTools";
+import AdminLeads from "./pages/admin/AdminLeads";
 import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientProjects from "./pages/client/ClientProjects";
 import ClientMessages from "./pages/client/ClientMessages";
@@ -53,6 +54,7 @@ const App = () => {
             <Route path="/admin/projects" element={<AdminProjects />} />
             <Route path="/admin/briefs" element={<AdminBriefs />} />
             <Route path="/admin/tools" element={<AdminTools />} />
+            <Route path="/admin/leads" element={<AdminLeads />} />
             <Route path="/admin/clients" element={<AdminClients />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
             <Route path="/admin/documents" element={<AdminDocuments />} />

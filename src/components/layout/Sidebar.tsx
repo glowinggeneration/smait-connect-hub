@@ -18,6 +18,7 @@ import {
   Menu,
   Home,
   Wrench,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,6 +38,7 @@ interface UserProfile {
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/admin" },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
+  { icon: Target, label: "Leads", path: "/admin/leads" },
   { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
   { icon: FileText, label: "Briefs", path: "/admin/briefs" },
   { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
