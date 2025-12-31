@@ -57,6 +57,7 @@ interface Meeting {
   duration: number;
   type: string;
   location: string | null;
+  meeting_link: string | null;
   client_id: string;
   status: string;
 }
@@ -82,6 +83,7 @@ const AdminMeetings = () => {
     type: "video",
     client_id: "",
     location: "",
+    meeting_link: "",
   });
 
   useEffect(() => {
@@ -147,7 +149,8 @@ const AdminMeetings = () => {
           type: newMeeting.type,
           client_id: newMeeting.client_id,
           created_by: user.id,
-          location: newMeeting.location || (newMeeting.type === "video" ? "Google Meet" : null),
+          location: newMeeting.location || (newMeeting.type === "video" ? "Video Call" : null),
+          meeting_link: newMeeting.meeting_link || null,
           status: "upcoming",
         })
         .select()
@@ -165,6 +168,7 @@ const AdminMeetings = () => {
         type: "video",
         client_id: "",
         location: "",
+        meeting_link: "",
       });
       setIsDialogOpen(false);
       toast({
@@ -280,10 +284,12 @@ const AdminMeetings = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {meeting.type === "video" && (
-                <DropdownMenuItem>
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Join Meeting
+              {meeting.type === "video" && meeting.meeting_link && (
+                <DropdownMenuItem asChild>
+                  <a href={meeting.meeting_link} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Join Meeting
+                  </a>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem>
@@ -451,14 +457,28 @@ const AdminMeetings = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location / Link</Label>
+                  <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
-                    placeholder="Meeting room or video link"
+                    placeholder="Meeting room or address"
                     value={newMeeting.location}
                     onChange={(e) => setNewMeeting({ ...newMeeting, location: e.target.value })}
                   />
                 </div>
+                {newMeeting.type === "video" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="meeting_link">Meeting Link</Label>
+                    <Input
+                      id="meeting_link"
+                      placeholder="https://meet.google.com/... or Zoom/Teams link"
+                      value={newMeeting.meeting_link}
+                      onChange={(e) => setNewMeeting({ ...newMeeting, meeting_link: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Paste your Google Meet, Zoom, or Teams meeting link
+                    </p>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

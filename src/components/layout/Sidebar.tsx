@@ -21,6 +21,7 @@ import {
   Target,
   Bot,
   ClipboardList,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,6 +51,7 @@ const adminNavItems = [
   { icon: Calendar, label: "Meetings", path: "/admin/meetings" },
   { icon: Users, label: "Clients", path: "/admin/clients" },
   { icon: Wrench, label: "Tools", path: "/admin/tools" },
+  { icon: Link2, label: "Integrations", path: "/admin/integrations" },
   { icon: Settings, label: "Settings", path: "/admin/settings" },
 ];
 
