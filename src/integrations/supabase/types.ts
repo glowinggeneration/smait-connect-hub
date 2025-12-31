@@ -91,6 +91,45 @@ export type Database = {
           },
         ]
       }
+      integrations: {
+        Row: {
+          access_token: string | null
+          calendar_id: string | null
+          created_at: string
+          enabled: boolean | null
+          id: string
+          provider: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          provider: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          provider?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lead_assignees: {
         Row: {
           created_at: string
@@ -175,6 +214,7 @@ export type Database = {
           duration: number
           id: string
           location: string | null
+          meeting_link: string | null
           status: string
           time: string
           title: string
@@ -190,6 +230,7 @@ export type Database = {
           duration?: number
           id?: string
           location?: string | null
+          meeting_link?: string | null
           status?: string
           time: string
           title: string
@@ -205,6 +246,7 @@ export type Database = {
           duration?: number
           id?: string
           location?: string | null
+          meeting_link?: string | null
           status?: string
           time?: string
           title?: string
