@@ -41,6 +41,7 @@ interface UserProfile {
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/admin" },
   { icon: Bot, label: "AI PM", path: "/admin/ai-pm" },
+  { icon: Users, label: "Agents", path: "/admin/agents" },
   { icon: ClipboardList, label: "Project Planner", path: "/admin/project-planner" },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
   { icon: Target, label: "Leads", path: "/admin/leads" },
