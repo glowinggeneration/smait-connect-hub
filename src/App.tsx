@@ -22,6 +22,7 @@ import AdminLeads from "./pages/admin/AdminLeads";
 import AdminAIProjectManager from "./pages/admin/AdminAIProjectManager";
 import AdminProjectPlanner from "./pages/admin/AdminProjectPlanner";
 import AdminIntegrations from "./pages/admin/AdminIntegrations";
+import AdminAgents from "./pages/admin/AdminAgents";
 import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientProjects from "./pages/client/ClientProjects";
 import ClientMessages from "./pages/client/ClientMessages";
@@ -65,6 +66,7 @@ const App = () => {
             <Route path="/admin/documents" element={<AdminDocuments />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/integrations" element={<AdminIntegrations />} />
+            <Route path="/admin/agents" element={<AdminAgents />} />
             <Route path="/admin/project/:id" element={<AdminProjectDetail />} />
             <Route path="/admin/client/:clientId" element={<AdminClientDetail />} />
             {/* Client Routes */}
