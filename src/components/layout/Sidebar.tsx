@@ -38,6 +38,8 @@ interface UserProfile {
   company: string | null;
 }
 
+import { UserCog } from "lucide-react";
+
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/admin" },
   { icon: Bot, label: "AI PM", path: "/admin/ai-pm" },
@@ -50,6 +52,7 @@ const adminNavItems = [
   { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
   { icon: Clock, label: "Standups", path: "/admin/standups" },
   { icon: Calendar, label: "Meetings", path: "/admin/meetings" },
+  { icon: UserCog, label: "Users", path: "/admin/users" },
   { icon: Users, label: "Clients", path: "/admin/clients" },
   { icon: Wrench, label: "Tools", path: "/admin/tools" },
   { icon: Link2, label: "Integrations", path: "/admin/integrations" },
