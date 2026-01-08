@@ -9,11 +9,12 @@ import {
   Crown, Users, Target, Scale, FileText, DollarSign, 
   Palette, PenTool, Package, Server, Code, Brain,
   TestTube, Shield, Rocket, Handshake, HeadphonesIcon, TrendingUp,
-  ArrowRight, Play, Download, X, MessageSquare, Loader2
+  ArrowRight, Play, Download, X, MessageSquare, Loader2, FileDown
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
 
 interface Agent {
   id: string;
@@ -431,6 +432,146 @@ const AdminAgents = () => {
     }
   }, [brief, agents]);
 
+  const generatePDF = () => {
+    const completedAgents = agents.filter(a => a.status === "completed" && a.result);
+    if (completedAgents.length === 0) {
+      toast.error("No completed outputs to download");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const maxWidth = pageWidth - margin * 2;
+    let yPos = margin;
+
+    // Helper to add new page if needed
+    const checkNewPage = (requiredHeight: number) => {
+      if (yPos + requiredHeight > pageHeight - margin) {
+        doc.addPage();
+        yPos = margin;
+      }
+    };
+
+    // Title page
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("AI Agency Project Report", pageWidth / 2, 60, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 75, { align: "center" });
+    doc.text(`Total Agents: ${completedAgents.length}`, pageWidth / 2, 85, { align: "center" });
+
+    // Project Brief
+    if (brief) {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Project Brief:", margin, 110);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const briefLines = doc.splitTextToSize(brief, maxWidth);
+      doc.text(briefLines, margin, 120);
+    }
+
+    // Start agent outputs on new page
+    doc.addPage();
+    yPos = margin;
+
+    // Table of Contents
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Table of Contents", margin, yPos);
+    yPos += 15;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    completedAgents.forEach((agent, index) => {
+      checkNewPage(8);
+      doc.text(`${index + 1}. ${agent.name} - ${agent.role} (Phase ${agent.phase})`, margin, yPos);
+      yPos += 8;
+    });
+
+    // Agent outputs
+    completedAgents.forEach((agent, index) => {
+      doc.addPage();
+      yPos = margin;
+
+      // Agent header
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${index + 1}. ${agent.name}`, margin, yPos);
+      yPos += 8;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(agent.role, margin, yPos);
+      yPos += 8;
+
+      doc.setFontSize(10);
+      doc.text(`Phase ${agent.phase}: ${agent.phaseName}`, margin, yPos);
+      yPos += 5;
+
+      // Divider
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+
+      // Persona
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("Persona:", margin, yPos);
+      yPos += 6;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const personaLines = doc.splitTextToSize(agent.persona, maxWidth);
+      personaLines.forEach((line: string) => {
+        checkNewPage(6);
+        doc.text(line, margin, yPos);
+        yPos += 6;
+      });
+      yPos += 5;
+
+      // Responsibilities
+      checkNewPage(20);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("Responsibilities:", margin, yPos);
+      yPos += 6;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      agent.responsibilities.forEach(resp => {
+        checkNewPage(6);
+        doc.text(`• ${resp}`, margin + 5, yPos);
+        yPos += 6;
+      });
+      yPos += 5;
+
+      // Output
+      checkNewPage(20);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("Generated Output:", margin, yPos);
+      yPos += 8;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      if (agent.result) {
+        const outputLines = doc.splitTextToSize(agent.result, maxWidth);
+        outputLines.forEach((line: string) => {
+          checkNewPage(5);
+          doc.text(line, margin, yPos);
+          yPos += 5;
+        });
+      }
+    });
+
+    // Save the PDF
+    doc.save(`ai-agency-report-${Date.now()}.pdf`);
+    toast.success("Comprehensive PDF report downloaded!");
+  };
+
   const downloadAllOutputs = () => {
     const completedAgents = agents.filter(a => a.status === "completed" && a.result);
     if (completedAgents.length === 0) {
@@ -512,9 +653,13 @@ const AdminAgents = () => {
                 )}
                 {agents.some(a => a.status === "completed") && (
                   <>
+                    <Button variant="default" onClick={generatePDF}>
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Download PDF Report
+                    </Button>
                     <Button variant="outline" onClick={downloadAllOutputs}>
                       <Download className="h-4 w-4 mr-2" />
-                      Download All
+                      Download Markdown
                     </Button>
                     <Button variant="outline" onClick={resetAgency}>
                       Reset
