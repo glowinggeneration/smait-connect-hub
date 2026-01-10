@@ -5,16 +5,21 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Crown, Users, Target, Scale, FileText, DollarSign, 
   Palette, PenTool, Package, Server, Code, Brain,
   TestTube, Shield, Rocket, Handshake, HeadphonesIcon, TrendingUp,
-  ArrowRight, Play, Download, X, MessageSquare, Loader2, FileDown
+  Play, Download, X, MessageSquare, Loader2, FileDown,
+  ChevronDown, ChevronUp, Sparkles, Clock, CheckCircle2,
+  AlertCircle, RefreshCw, Eye, Zap, Lightbulb
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { cn } from "@/lib/utils";
 
 interface Agent {
   id: string;
@@ -286,13 +291,30 @@ const phaseColors: Record<number, string> = {
   6: "bg-teal-500/20 text-teal-400 border-teal-500/30"
 };
 
-const statusConfig: Record<string, { label: string; color: string; pulse: boolean }> = {
-  idle: { label: "Idle", color: "bg-muted text-muted-foreground", pulse: false },
-  working: { label: "Working", color: "bg-green-500/20 text-green-400", pulse: true },
-  completed: { label: "Completed", color: "bg-blue-500/20 text-blue-400", pulse: false },
-  waiting: { label: "Waiting", color: "bg-yellow-500/20 text-yellow-400", pulse: true },
-  error: { label: "Error", color: "bg-red-500/20 text-red-400", pulse: false }
+const phaseIcons: Record<number, React.ElementType> = {
+  0: Crown,
+  1: Target,
+  2: FileText,
+  3: Palette,
+  4: Code,
+  5: TestTube,
+  6: Handshake
 };
+
+const statusConfig: Record<string, { label: string; color: string; pulse: boolean; icon: React.ElementType }> = {
+  idle: { label: "Ready", color: "bg-muted/50 text-muted-foreground border-muted", pulse: false, icon: Clock },
+  working: { label: "Working", color: "bg-green-500/20 text-green-400 border-green-500/30", pulse: true, icon: Loader2 },
+  completed: { label: "Done", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", pulse: false, icon: CheckCircle2 },
+  waiting: { label: "Queued", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", pulse: true, icon: Clock },
+  error: { label: "Error", color: "bg-red-500/20 text-red-400 border-red-500/30", pulse: false, icon: AlertCircle }
+};
+
+const briefTemplates = [
+  { label: "Mobile App", value: "Build a mobile-first application that..." },
+  { label: "SaaS Platform", value: "Create a SaaS platform for businesses to..." },
+  { label: "E-commerce", value: "Develop an e-commerce solution that allows..." },
+  { label: "AI Tool", value: "Design an AI-powered tool that helps users..." }
+];
 
 const AdminAgents = () => {
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
@@ -302,6 +324,32 @@ const AdminAgents = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentPhase, setCurrentPhase] = useState(-1);
   const [showBriefPanel, setShowBriefPanel] = useState(true);
+  const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5, 6]));
+  const [expandedMessage, setExpandedMessage] = useState<number | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Calculate overall progress
+  const progress = useMemo(() => {
+    const completed = agents.filter(a => a.status === "completed").length;
+    return Math.round((completed / agents.length) * 100);
+  }, [agents]);
+
+  const togglePhase = (phase: number) => {
+    setExpandedPhases(prev => {
+      const next = new Set(prev);
+      if (next.has(phase)) {
+        next.delete(phase);
+      } else {
+        next.add(phase);
+      }
+      return next;
+    });
+  };
 
   const addMessage = (msg: Message) => {
     setMessages(prev => [...prev, msg]);
@@ -369,7 +417,7 @@ const AdminAgents = () => {
     setIsProcessing(true);
     setMessages([]);
     setAgents(initialAgents);
-    setShowBriefPanel(false);
+    setExpandedPhases(new Set([0, 1, 2, 3, 4, 5, 6]));
 
     const agentOrder = [
       "managing-partner",
@@ -446,7 +494,6 @@ const AdminAgents = () => {
     const maxWidth = pageWidth - margin * 2;
     let yPos = margin;
 
-    // Helper to add new page if needed
     const checkNewPage = (requiredHeight: number) => {
       if (yPos + requiredHeight > pageHeight - margin) {
         doc.addPage();
@@ -464,7 +511,6 @@ const AdminAgents = () => {
     doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 75, { align: "center" });
     doc.text(`Total Agents: ${completedAgents.length}`, pageWidth / 2, 85, { align: "center" });
 
-    // Project Brief
     if (brief) {
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
@@ -475,7 +521,6 @@ const AdminAgents = () => {
       doc.text(briefLines, margin, 120);
     }
 
-    // Start agent outputs on new page
     doc.addPage();
     yPos = margin;
 
@@ -498,7 +543,6 @@ const AdminAgents = () => {
       doc.addPage();
       yPos = margin;
 
-      // Agent header
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
       doc.text(`${index + 1}. ${agent.name}`, margin, yPos);
@@ -513,12 +557,10 @@ const AdminAgents = () => {
       doc.text(`Phase ${agent.phase}: ${agent.phaseName}`, margin, yPos);
       yPos += 5;
 
-      // Divider
       doc.setDrawColor(200, 200, 200);
       doc.line(margin, yPos, pageWidth - margin, yPos);
       yPos += 10;
 
-      // Persona
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.text("Persona:", margin, yPos);
@@ -533,7 +575,6 @@ const AdminAgents = () => {
       });
       yPos += 5;
 
-      // Responsibilities
       checkNewPage(20);
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
@@ -548,7 +589,6 @@ const AdminAgents = () => {
       });
       yPos += 5;
 
-      // Output
       checkNewPage(20);
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
@@ -567,7 +607,6 @@ const AdminAgents = () => {
       }
     });
 
-    // Save the PDF
     doc.save(`ai-agency-report-${Date.now()}.pdf`);
     toast.success("Comprehensive PDF report downloaded!");
   };
@@ -621,6 +660,7 @@ const AdminAgents = () => {
     setCurrentPhase(-1);
     setShowBriefPanel(true);
     setBrief("");
+    setExpandedPhases(new Set([0, 1, 2, 3, 4, 5, 6]));
   };
 
   const groupedAgents = agents.reduce((acc, agent) => {
@@ -631,190 +671,360 @@ const AdminAgents = () => {
     return acc;
   }, {} as Record<number, { name: string; agents: Agent[] }>);
 
+  // Get phase status
+  const getPhaseStatus = (phase: number) => {
+    const phaseAgents = groupedAgents[phase]?.agents || [];
+    const completed = phaseAgents.filter(a => a.status === "completed").length;
+    const working = phaseAgents.some(a => a.status === "working");
+    const hasError = phaseAgents.some(a => a.status === "error");
+    
+    if (hasError) return "error";
+    if (completed === phaseAgents.length && completed > 0) return "completed";
+    if (working) return "working";
+    if (currentPhase === phase) return "active";
+    return "idle";
+  };
+
   return (
     <DashboardLayout userType="admin">
-      <div className="flex h-[calc(100vh-120px)] gap-4">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] gap-4">
         {/* Main Agent Grid */}
         <div className="flex-1 overflow-auto">
-          <div className="space-y-6 pb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">AI Agency Agents</h1>
-                <p className="text-muted-foreground mt-1">
-                  Your digital consulting firm with institutional memory
-                </p>
+          <div className="space-y-4 pb-6">
+            {/* Header with Progress */}
+            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 -mx-4 px-4 py-4 mb-2">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                    <Sparkles className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-foreground">AI Agency</h1>
+                    <p className="text-sm text-muted-foreground">
+                      18 specialized agents at your service
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-2">
+                  {!showBriefPanel && (
+                    <Button variant="outline" size="sm" onClick={() => setShowBriefPanel(true)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Brief
+                    </Button>
+                  )}
+                  {agents.some(a => a.status === "completed") && (
+                    <>
+                      <Button size="sm" onClick={generatePDF} className="bg-gradient-to-r from-primary to-primary/80">
+                        <FileDown className="h-4 w-4 mr-2" />
+                        PDF
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={downloadAllOutputs}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Markdown
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={resetAgency}>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Reset
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-2">
-                {!showBriefPanel && (
-                  <Button variant="outline" onClick={() => setShowBriefPanel(true)}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Brief Panel
-                  </Button>
-                )}
-                {agents.some(a => a.status === "completed") && (
-                  <>
-                    <Button variant="default" onClick={generatePDF}>
-                      <FileDown className="h-4 w-4 mr-2" />
-                      Download PDF Report
-                    </Button>
-                    <Button variant="outline" onClick={downloadAllOutputs}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Markdown
-                    </Button>
-                    <Button variant="outline" onClick={resetAgency}>
-                      Reset
-                    </Button>
-                  </>
-                )}
+
+              {/* Progress Bar */}
+              {(isProcessing || progress > 0) && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Overall Progress</span>
+                    <span className="font-medium text-foreground">{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                </div>
+              )}
+
+              {/* Phase Timeline */}
+              <div className="mt-4 flex items-center gap-1 overflow-x-auto pb-2">
+                {Object.entries(groupedAgents).map(([phase, data], index) => {
+                  const status = getPhaseStatus(Number(phase));
+                  const PhaseIcon = phaseIcons[Number(phase)];
+                  return (
+                    <div key={phase} className="flex items-center">
+                      <button
+                        onClick={() => togglePhase(Number(phase))}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                          status === "completed" && "bg-green-500/20 text-green-400 border border-green-500/30",
+                          status === "working" && "bg-primary/20 text-primary border border-primary/30 animate-pulse",
+                          status === "active" && "bg-primary/10 text-primary border border-primary/20",
+                          status === "error" && "bg-red-500/20 text-red-400 border border-red-500/30",
+                          status === "idle" && "bg-muted/50 text-muted-foreground border border-muted"
+                        )}
+                      >
+                        <PhaseIcon className="h-3 w-3" />
+                        <span className="hidden sm:inline">{data.name}</span>
+                        <span className="sm:hidden">P{phase}</span>
+                        {status === "completed" && <CheckCircle2 className="h-3 w-3" />}
+                        {status === "working" && <Loader2 className="h-3 w-3 animate-spin" />}
+                      </button>
+                      {index < Object.entries(groupedAgents).length - 1 && (
+                        <div className={cn(
+                          "w-4 h-0.5 mx-1",
+                          status === "completed" ? "bg-green-500/50" : "bg-muted"
+                        )} />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Orchestrator - Phase 0 */}
-            <div className="flex justify-center">
-              {groupedAgents[0]?.agents.map((agent) => (
-                <Card 
-                  key={agent.id}
-                  className={`w-full max-w-md cursor-pointer transition-all hover:scale-[1.02] border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/10 ${
-                    agent.status === "working" ? "ring-2 ring-green-500 ring-offset-2 ring-offset-background" : ""
-                  }`}
-                  onClick={() => setSelectedAgent(agent)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className={`h-12 w-12 bg-gradient-to-br ${agent.color}`}>
-                          <AvatarFallback className="bg-transparent text-white">
-                            <agent.icon className="h-6 w-6" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-lg">{agent.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{agent.role}</p>
+            <Collapsible 
+              open={expandedPhases.has(0)} 
+              onOpenChange={() => togglePhase(0)}
+            >
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <Badge className={cn(phaseColors[0], "border")}>
+                      Phase 0
+                    </Badge>
+                    <span className="font-medium">Orchestration</span>
+                    {expandedPhases.has(0) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              
+              <CollapsibleContent>
+                <div className="flex justify-center mb-6">
+                  {groupedAgents[0]?.agents.map((agent) => (
+                    <Card 
+                      key={agent.id}
+                      className={cn(
+                        "w-full max-w-lg cursor-pointer transition-all duration-300",
+                        "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/10",
+                        "hover:scale-[1.02] hover:shadow-lg hover:shadow-amber-500/10",
+                        agent.status === "working" && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                      )}
+                      onClick={() => setSelectedAgent(agent)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <Avatar className={cn("h-14 w-14 bg-gradient-to-br", agent.color, "ring-2 ring-white/10")}>
+                              <AvatarFallback className="bg-transparent text-white">
+                                <agent.icon className="h-7 w-7" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-xl">{agent.name}</CardTitle>
+                              <p className="text-sm text-muted-foreground">{agent.role}</p>
+                            </div>
+                          </div>
+                          <Badge className={cn(
+                            statusConfig[agent.status].color, 
+                            "border",
+                            statusConfig[agent.status].pulse && "animate-pulse"
+                          )}>
+                            {statusConfig[agent.status].label}
+                          </Badge>
                         </div>
-                      </div>
-                      <Badge className={`${statusConfig[agent.status].color} ${statusConfig[agent.status].pulse ? "animate-pulse" : ""}`}>
-                        {statusConfig[agent.status].label}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-3">{agent.persona}</p>
-                    {agent.result && (
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={(e) => { e.stopPropagation(); downloadAgentOutput(agent); }}
-                      >
-                        <Download className="h-3 w-3 mr-2" />
-                        Download Output
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="flex justify-center">
-              <ArrowRight className="h-8 w-8 text-muted-foreground rotate-90" />
-            </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">{agent.persona}</p>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={(e) => { e.stopPropagation(); setSelectedAgent(agent); }}
+                          >
+                            <Eye className="h-3 w-3 mr-2" />
+                            View Details
+                          </Button>
+                          {agent.result && (
+                            <Button 
+                              size="sm" 
+                              variant="secondary"
+                              onClick={(e) => { e.stopPropagation(); downloadAgentOutput(agent); }}
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Other Phases */}
             {Object.entries(groupedAgents)
               .filter(([phase]) => Number(phase) > 0)
-              .map(([phase, data]) => (
-                <div key={phase} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Badge className={`${phaseColors[Number(phase)]} border`}>
-                      Phase {phase}
-                    </Badge>
-                    <h2 className="text-xl font-semibold text-foreground">{data.name}</h2>
-                    {currentPhase === Number(phase) && isProcessing && (
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {data.agents.map((agent) => (
-                      <Card 
-                        key={agent.id}
-                        className={`cursor-pointer transition-all hover:scale-[1.02] hover:border-primary/50 ${
-                          agent.status === "working" ? "ring-2 ring-green-500 ring-offset-2 ring-offset-background" : ""
-                        }`}
-                        onClick={() => setSelectedAgent(agent)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <Avatar className={`h-10 w-10 bg-gradient-to-br ${agent.color}`}>
-                              <AvatarFallback className="bg-transparent text-white">
-                                <agent.icon className="h-5 w-5" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <Badge className={`${statusConfig[agent.status].color} ${statusConfig[agent.status].pulse ? "animate-pulse" : ""} text-xs`}>
-                              {statusConfig[agent.status].label}
-                            </Badge>
-                          </div>
-                          <CardTitle className="text-base">{agent.name}</CardTitle>
-                          <p className="text-xs text-muted-foreground">{agent.role}</p>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{agent.persona}</p>
-                          {agent.result && (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="w-full text-xs h-7"
-                              onClick={(e) => { e.stopPropagation(); downloadAgentOutput(agent); }}
-                            >
-                              <Download className="h-3 w-3 mr-1" />
-                              Download
-                            </Button>
+              .map(([phase, data]) => {
+                const phaseNum = Number(phase);
+                const phaseStatus = getPhaseStatus(phaseNum);
+                
+                return (
+                  <Collapsible 
+                    key={phase} 
+                    open={expandedPhases.has(phaseNum)}
+                    onOpenChange={() => togglePhase(phaseNum)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full flex items-center justify-between p-3 rounded-lg bg-card/50 hover:bg-card transition-colors mb-3">
+                        <div className="flex items-center gap-3">
+                          <Badge className={cn(phaseColors[phaseNum], "border")}>
+                            Phase {phase}
+                          </Badge>
+                          <h2 className="text-lg font-semibold text-foreground">{data.name}</h2>
+                          {phaseStatus === "working" && (
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
                           )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {Number(phase) < 6 && (
-                    <div className="flex justify-center py-2">
-                      <ArrowRight className="h-6 w-6 text-muted-foreground rotate-90" />
-                    </div>
-                  )}
-                </div>
-              ))}
+                          {phaseStatus === "completed" && (
+                            <CheckCircle2 className="h-4 w-4 text-green-400" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {data.agents.filter(a => a.status === "completed").length}/{data.agents.length}
+                          </span>
+                          {expandedPhases.has(phaseNum) ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </button>
+                    </CollapsibleTrigger>
+                    
+                    <CollapsibleContent>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
+                        {data.agents.map((agent) => {
+                          const StatusIcon = statusConfig[agent.status].icon;
+                          return (
+                            <Card 
+                              key={agent.id}
+                              className={cn(
+                                "cursor-pointer transition-all duration-200 group",
+                                "hover:scale-[1.02] hover:border-primary/50 hover:shadow-md",
+                                agent.status === "working" && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+                                agent.status === "completed" && "border-green-500/30"
+                              )}
+                              onClick={() => setSelectedAgent(agent)}
+                            >
+                              <CardHeader className="pb-2 pt-4">
+                                <div className="flex items-start justify-between mb-3">
+                                  <Avatar className={cn("h-10 w-10 bg-gradient-to-br", agent.color, "ring-2 ring-white/10 group-hover:ring-white/20 transition-all")}>
+                                    <AvatarFallback className="bg-transparent text-white">
+                                      <agent.icon className="h-5 w-5" />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <Badge className={cn(
+                                    statusConfig[agent.status].color, 
+                                    "border text-[10px] gap-1",
+                                    statusConfig[agent.status].pulse && "animate-pulse"
+                                  )}>
+                                    <StatusIcon className={cn("h-2.5 w-2.5", agent.status === "working" && "animate-spin")} />
+                                    {statusConfig[agent.status].label}
+                                  </Badge>
+                                </div>
+                                <CardTitle className="text-sm">{agent.name}</CardTitle>
+                                <p className="text-xs text-muted-foreground">{agent.role}</p>
+                              </CardHeader>
+                              <CardContent className="pt-0 pb-4">
+                                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{agent.persona}</p>
+                                {agent.result && (
+                                  <div className="flex gap-1.5">
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      className="flex-1 text-[10px] h-7"
+                                      onClick={(e) => { e.stopPropagation(); setSelectedAgent(agent); }}
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      View
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="text-[10px] h-7"
+                                      onClick={(e) => { e.stopPropagation(); downloadAgentOutput(agent); }}
+                                    >
+                                      <Download className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
           </div>
         </div>
 
         {/* Brief & Communication Panel */}
         {showBriefPanel && (
-          <div className="w-96 flex flex-col gap-4">
+          <div className="w-full lg:w-96 flex flex-col gap-4 max-h-[calc(100vh-120px)]">
             {/* Brief Input */}
-            <Card>
+            <Card className="shrink-0">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Project Brief</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">Project Brief</CardTitle>
+                  </div>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowBriefPanel(false)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Textarea
-                  placeholder="Describe your project... What do you want to build? Who is it for? What problem does it solve?"
-                  value={brief}
-                  onChange={(e) => setBrief(e.target.value)}
-                  className="min-h-[150px] resize-none"
-                  disabled={isProcessing}
-                />
+                {/* Quick Templates */}
+                <div className="flex flex-wrap gap-1.5">
+                  {briefTemplates.map(template => (
+                    <Button
+                      key={template.label}
+                      variant="outline"
+                      size="sm"
+                      className="text-[10px] h-6 px-2"
+                      onClick={() => setBrief(template.value)}
+                      disabled={isProcessing}
+                    >
+                      <Lightbulb className="h-3 w-3 mr-1" />
+                      {template.label}
+                    </Button>
+                  ))}
+                </div>
+                
+                <div className="relative">
+                  <Textarea
+                    placeholder="Describe your project in detail... What do you want to build? Who is it for? What problem does it solve? What features are essential?"
+                    value={brief}
+                    onChange={(e) => setBrief(e.target.value)}
+                    className="min-h-[120px] resize-none pr-12"
+                    disabled={isProcessing}
+                  />
+                  <span className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">
+                    {brief.length} chars
+                  </span>
+                </div>
+                
                 <Button 
-                  className="w-full" 
+                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" 
                   onClick={runAgency}
                   disabled={isProcessing || !brief.trim()}
                 >
                   {isProcessing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
+                      Processing ({progress}%)
                     </>
                   ) : (
                     <>
@@ -827,56 +1037,76 @@ const AdminAgents = () => {
             </Card>
 
             {/* Communication Feed */}
-            <Card className="flex-1 flex flex-col overflow-hidden">
-              <CardHeader className="pb-3">
+            <Card className="flex-1 flex flex-col overflow-hidden min-h-0">
+              <CardHeader className="pb-3 shrink-0">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Agent Communication
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  Live Feed
+                  {messages.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto text-[10px]">
+                      {messages.length}
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 p-0 overflow-hidden">
-                <ScrollArea className="h-[calc(100vh-500px)]">
-                  <div className="space-y-3 p-4">
+              <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
+                <ScrollArea className="h-full">
+                  <div className="space-y-2 p-4">
                     {messages.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        Agent communication will appear here when you run the agency
-                      </p>
+                      <div className="text-center py-12 space-y-3">
+                        <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground">
+                          Agent communication will appear here
+                        </p>
+                        <p className="text-xs text-muted-foreground/60">
+                          Run the agency to see live updates
+                        </p>
+                      </div>
                     ) : (
                       messages.map((msg, index) => {
                         const agent = agents.find(a => a.id === msg.agentId);
+                        const isExpanded = expandedMessage === index;
+                        
                         return (
                           <div 
                             key={index} 
-                            className={`p-3 rounded-lg ${
-                              msg.type === "handoff" 
-                                ? "bg-primary/10 border border-primary/30" 
-                                : msg.type === "working"
-                                ? "bg-muted/50"
-                                : "bg-card border"
-                            }`}
+                            className={cn(
+                              "p-3 rounded-lg cursor-pointer transition-all",
+                              msg.type === "handoff" && "bg-primary/10 border border-primary/20",
+                              msg.type === "working" && "bg-muted/30 border border-muted/50",
+                              msg.type === "output" && "bg-card border border-border"
+                            )}
+                            onClick={() => setExpandedMessage(isExpanded ? null : index)}
                           >
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1.5">
                               {agent && (
-                                <Avatar className={`h-6 w-6 bg-gradient-to-br ${agent.color}`}>
-                                  <AvatarFallback className="bg-transparent text-white text-xs">
-                                    <agent.icon className="h-3 w-3" />
+                                <Avatar className={cn("h-5 w-5 bg-gradient-to-br", agent.color)}>
+                                  <AvatarFallback className="bg-transparent text-white text-[8px]">
+                                    <agent.icon className="h-2.5 w-2.5" />
                                   </AvatarFallback>
                                 </Avatar>
                               )}
-                              <span className="text-sm font-medium">{msg.agentName}</span>
-                              <span className="text-xs text-muted-foreground ml-auto">
+                              <span className="text-xs font-medium">{msg.agentName}</span>
+                              <span className="text-[10px] text-muted-foreground ml-auto">
                                 {new Date(msg.timestamp).toLocaleTimeString()}
                               </span>
                             </div>
-                            <p className={`text-xs ${msg.type === "output" ? "whitespace-pre-wrap" : ""} ${
-                              msg.type === "handoff" ? "text-primary italic" : "text-muted-foreground"
-                            } line-clamp-3`}>
+                            <p className={cn(
+                              "text-xs",
+                              msg.type === "output" && "whitespace-pre-wrap",
+                              msg.type === "handoff" && "text-primary italic",
+                              !isExpanded && msg.type === "output" && "line-clamp-2"
+                            )}>
                               {msg.content}
                             </p>
+                            {msg.type === "output" && !isExpanded && msg.content.length > 100 && (
+                              <p className="text-[10px] text-primary mt-1">Click to expand</p>
+                            )}
                           </div>
                         );
                       })
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
               </CardContent>
@@ -891,21 +1121,21 @@ const AdminAgents = () => {
             onClick={() => setSelectedAgent(null)}
           >
             <Card 
-              className="w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+              className="w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <CardHeader>
+              <CardHeader className="shrink-0 border-b border-border/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <Avatar className={`h-16 w-16 bg-gradient-to-br ${selectedAgent.color}`}>
+                    <Avatar className={cn("h-14 w-14 bg-gradient-to-br", selectedAgent.color, "ring-2 ring-white/10")}>
                       <AvatarFallback className="bg-transparent text-white">
-                        <selectedAgent.icon className="h-8 w-8" />
+                        <selectedAgent.icon className="h-7 w-7" />
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-2xl">{selectedAgent.name}</CardTitle>
-                      <p className="text-muted-foreground">{selectedAgent.role}</p>
-                      <Badge className={`${phaseColors[selectedAgent.phase]} border mt-2`}>
+                      <CardTitle className="text-xl">{selectedAgent.name}</CardTitle>
+                      <p className="text-muted-foreground text-sm">{selectedAgent.role}</p>
+                      <Badge className={cn(phaseColors[selectedAgent.phase], "border mt-2 text-xs")}>
                         Phase {selectedAgent.phase}: {selectedAgent.phaseName}
                       </Badge>
                     </div>
@@ -915,18 +1145,24 @@ const AdminAgents = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4 overflow-auto flex-1">
+              <CardContent className="space-y-5 overflow-auto flex-1 py-5">
                 <div>
-                  <h4 className="font-medium text-foreground mb-1">Persona</h4>
-                  <p className="text-sm text-muted-foreground">{selectedAgent.persona}</p>
+                  <h4 className="font-medium text-foreground mb-2 text-sm flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-primary" />
+                    Persona
+                  </h4>
+                  <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">{selectedAgent.persona}</p>
                 </div>
-                
+
                 <div>
-                  <h4 className="font-medium text-foreground mb-2">Responsibilities</h4>
-                  <ul className="space-y-1">
+                  <h4 className="font-medium text-foreground mb-2 text-sm flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    Responsibilities
+                  </h4>
+                  <ul className="space-y-1.5">
                     {selectedAgent.responsibilities.map((resp, i) => (
-                      <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 shrink-0" />
                         {resp}
                       </li>
                     ))}
@@ -934,31 +1170,40 @@ const AdminAgents = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-foreground mb-1">Expected Output</h4>
-                  <p className="text-sm text-muted-foreground">{selectedAgent.output}</p>
+                  <h4 className="font-medium text-foreground mb-2 text-sm flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Expected Output
+                  </h4>
+                  <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">{selectedAgent.output}</p>
                 </div>
 
                 {selectedAgent.result && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-foreground">Generated Output</h4>
-                      <Button size="sm" variant="outline" onClick={() => downloadAgentOutput(selectedAgent)}>
+                      <h4 className="font-medium text-foreground text-sm flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        Generated Output
+                      </h4>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => downloadAgentOutput(selectedAgent)}
+                      >
                         <Download className="h-3 w-3 mr-2" />
                         Download
                       </Button>
                     </div>
-                    <ScrollArea className="h-64 border rounded-lg p-3">
-                      <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
+                    <div className="bg-card border rounded-lg p-4 max-h-60 overflow-auto">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                         {selectedAgent.result}
-                      </pre>
-                    </ScrollArea>
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <span className="text-sm text-muted-foreground">Current Status</span>
-                  <Badge className={`${statusConfig[selectedAgent.status].color} ${statusConfig[selectedAgent.status].pulse ? "animate-pulse" : ""}`}>
-                    {statusConfig[selectedAgent.status].label}
+                <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                  <Badge className={cn(statusConfig[selectedAgent.status].color, "border")}>
+                    Status: {statusConfig[selectedAgent.status].label}
                   </Badge>
                 </div>
               </CardContent>
