@@ -56,6 +56,98 @@ export type Database = {
           },
         ]
       }
+      agent_outputs: {
+        Row: {
+          agent_id: string
+          agent_name: string
+          agent_role: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          output: string | null
+          phase: number
+          phase_name: string
+          run_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          agent_id: string
+          agent_name: string
+          agent_role: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          output?: string | null
+          phase: number
+          phase_name: string
+          run_id: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          agent_id?: string
+          agent_name?: string
+          agent_role?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          output?: string | null
+          phase?: number
+          phase_name?: string
+          run_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_outputs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_runs: {
+        Row: {
+          brief: string
+          completed_agents: number
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          current_agent: string | null
+          id: string
+          progress: number
+          status: string
+          total_agents: number
+        }
+        Insert: {
+          brief: string
+          completed_agents?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          current_agent?: string | null
+          id?: string
+          progress?: number
+          status?: string
+          total_agents?: number
+        }
+        Update: {
+          brief?: string
+          completed_agents?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          current_agent?: string | null
+          id?: string
+          progress?: number
+          status?: string
+          total_agents?: number
+        }
+        Relationships: []
+      }
       brief_documents: {
         Row: {
           brief_id: string
