@@ -22,10 +22,14 @@ import {
   Bot,
   ClipboardList,
   Link2,
+  UserCog,
+  ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface SidebarProps {
   userType: "admin" | "client";
@@ -38,25 +42,58 @@ interface UserProfile {
   company: string | null;
 }
 
-import { UserCog } from "lucide-react";
+interface NavSection {
+  title: string;
+  items: { icon: React.ElementType; label: string; path: string }[];
+}
 
-const adminNavItems = [
-  { icon: LayoutDashboard, label: "Overview", path: "/admin" },
-  { icon: Bot, label: "AI PM", path: "/admin/ai-pm" },
-  { icon: Users, label: "Agents", path: "/admin/agents" },
-  { icon: ClipboardList, label: "Project Planner", path: "/admin/project-planner" },
-  { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
-  { icon: Target, label: "Leads", path: "/admin/leads" },
-  { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
-  { icon: FileText, label: "Briefs", path: "/admin/briefs" },
-  { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
-  { icon: Clock, label: "Standups", path: "/admin/standups" },
-  { icon: Calendar, label: "Meetings", path: "/admin/meetings" },
-  { icon: UserCog, label: "Users", path: "/admin/users" },
-  { icon: Users, label: "Clients", path: "/admin/clients" },
-  { icon: Wrench, label: "Tools", path: "/admin/tools" },
-  { icon: Link2, label: "Integrations", path: "/admin/integrations" },
-  { icon: Settings, label: "Settings", path: "/admin/settings" },
+const adminNavSections: NavSection[] = [
+  {
+    title: "Overview",
+    items: [
+      { icon: LayoutDashboard, label: "Overview", path: "/admin" },
+      { icon: Bot, label: "AI PM", path: "/admin/ai-pm" },
+    ],
+  },
+  {
+    title: "AI Tools",
+    items: [
+      { icon: Sparkles, label: "Agents", path: "/admin/agents" },
+      { icon: ClipboardList, label: "Project Planner", path: "/admin/project-planner" },
+    ],
+  },
+  {
+    title: "Work",
+    items: [
+      { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
+      { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
+      { icon: FileText, label: "Briefs", path: "/admin/briefs" },
+    ],
+  },
+  {
+    title: "People",
+    items: [
+      { icon: Target, label: "Leads", path: "/admin/leads" },
+      { icon: Users, label: "Clients", path: "/admin/clients" },
+    ],
+  },
+  {
+    title: "Communication",
+    items: [
+      { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
+      { icon: Clock, label: "Standups", path: "/admin/standups" },
+      { icon: Calendar, label: "Meetings", path: "/admin/meetings" },
+    ],
+  },
+  {
+    title: "Admin",
+    items: [
+      { icon: UserCog, label: "Users", path: "/admin/users" },
+      { icon: Wrench, label: "Tools", path: "/admin/tools" },
+      { icon: Link2, label: "Integrations", path: "/admin/integrations" },
+      { icon: Settings, label: "Settings", path: "/admin/settings" },
+    ],
+  },
 ];
 
 const clientNavItems = [
@@ -73,7 +110,7 @@ const adminBottomNav = [
   { icon: Home, label: "Home", path: "/admin" },
   { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
   { icon: Inbox, label: "Tasks", path: "/admin/tasks" },
-  { icon: Wrench, label: "Tools", path: "/admin/tools" },
+  { icon: Sparkles, label: "Agents", path: "/admin/agents" },
 ];
 
 const clientBottomNav = [
@@ -86,11 +123,13 @@ const clientBottomNav = [
 export const Sidebar = ({ userType }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const navItems = userType === "admin" ? adminNavItems : clientNavItems;
   const bottomNavItems = userType === "admin" ? adminBottomNav : clientBottomNav;
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(adminNavSections.map(s => s.title))
+  );
 
   useEffect(() => {
     fetchUserProfile();
@@ -145,6 +184,18 @@ export const Sidebar = ({ userType }: SidebarProps) => {
     return "User";
   };
 
+  const toggleSection = (title: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(title)) {
+        next.delete(title);
+      } else {
+        next.add(title);
+      }
+      return next;
+    });
+  };
+
   const NavContent = () => (
     <>
       {/* User Profile */}
@@ -167,27 +218,68 @@ export const Sidebar = ({ userType }: SidebarProps) => {
 
       {/* Menu Section */}
       <div className="flex-1 py-3 px-3 overflow-y-auto">
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group",
-                  isActive
-                    ? "bg-white/10 text-white font-medium backdrop-blur-sm"
-                    : "text-white/70 hover:text-white hover:bg-white/5"
-                )}
+        {userType === "admin" ? (
+          <nav className="space-y-1">
+            {adminNavSections.map((section) => (
+              <Collapsible 
+                key={section.title}
+                open={expandedSections.has(section.title)}
+                onOpenChange={() => toggleSection(section.title)}
               >
-                <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-primary")} />
-                <span className="text-sm">{item.label}</span>
-              </NavLink>
-            );
-          })}
-        </nav>
+                <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-white/40 uppercase tracking-wider hover:text-white/60 transition-colors">
+                  {section.title}
+                  <ChevronDown className={cn(
+                    "h-3 w-3 transition-transform",
+                    expandedSections.has(section.title) && "rotate-180"
+                  )} />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 relative group",
+                          isActive
+                            ? "bg-white/10 text-white font-medium backdrop-blur-sm"
+                            : "text-white/70 hover:text-white hover:bg-white/5"
+                        )}
+                      >
+                        <item.icon className={cn("w-4 h-4 flex-shrink-0", isActive && "text-primary")} />
+                        <span className="text-sm">{item.label}</span>
+                      </NavLink>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+          </nav>
+        ) : (
+          <nav className="space-y-1">
+            {clientNavItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group",
+                    isActive
+                      ? "bg-white/10 text-white font-medium backdrop-blur-sm"
+                      : "text-white/70 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-primary")} />
+                  <span className="text-sm">{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        )}
       </div>
 
       {/* Logout */}

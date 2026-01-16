@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AgentRunProvider } from "@/contexts/AgentRunContext";
+import { ActiveRunBanner } from "@/components/agents/ActiveRunBanner";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProjects from "./pages/admin/AdminProjects";
@@ -43,11 +45,13 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
+      <AgentRunProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ActiveRunBanner />
+            <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             {/* Admin Routes */}
@@ -80,10 +84,11 @@ const App = () => {
             <Route path="/client/notifications" element={<ClientNotifications />} />
             <Route path="/client/settings" element={<AdminSettings />} />
             <Route path="/client/project/:id" element={<ClientProjectDetail />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AgentRunProvider>
     </QueryClientProvider>
   );
 };
