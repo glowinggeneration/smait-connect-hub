@@ -511,8 +511,8 @@ const ProjectsContent = () => {
 
                       <div onClick={(e) => e.stopPropagation()}>
                         <ProjectProgressSlider
-                          progress={project.progress}
-                          onChange={(value) => updateProjectProgress(project.id, value)}
+                          value={project.progress}
+                          onSave={(value) => updateProjectProgress(project.id, value)}
                         />
                       </div>
 
