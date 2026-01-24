@@ -224,10 +224,27 @@ export const IntelligenceProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Default fallback for when context is not available
+const defaultContext: IntelligenceContextType = {
+  signals: [],
+  metrics: {
+    activeInitiatives: 0,
+    pendingAssignments: 0,
+    overdueItems: 0,
+    atRiskInitiatives: 0,
+    networkExposure: 0,
+    operatorLoad: 0,
+  },
+  isMonitoring: false,
+  acknowledgeSignal: () => {},
+  actOnSignal: () => {},
+  refreshIntelligence: async () => {},
+  getDecisionBriefs: () => [],
+  getActiveRisks: () => [],
+};
+
 export const useIntelligence = () => {
   const context = useContext(IntelligenceContext);
-  if (!context) {
-    throw new Error("useIntelligence must be used within an IntelligenceProvider");
-  }
-  return context;
+  // Return default context if not within provider (graceful fallback)
+  return context || defaultContext;
 };
