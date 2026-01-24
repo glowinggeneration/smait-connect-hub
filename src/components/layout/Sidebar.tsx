@@ -3,26 +3,15 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Users,
-  MessageSquare,
-  FileText,
+  Radio,
+  Briefcase,
+  Brain,
+  Network,
+  Package,
   Settings,
   LogOut,
-  Inbox,
-  Clock,
-  Calendar,
-  Plus,
-  Bell,
   Menu,
   Home,
-  Wrench,
-  Target,
-  Bot,
-  ClipboardList,
-  Link2,
-  UserCog,
   ChevronDown,
   Sparkles,
 } from "lucide-react";
@@ -30,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { useIntelligence } from "@/contexts/IntelligenceContext";
 
 interface SidebarProps {
   userType: "admin" | "client";
@@ -44,80 +35,31 @@ interface UserProfile {
 
 interface NavSection {
   title: string;
-  items: { icon: React.ElementType; label: string; path: string }[];
+  collapsible: boolean;
+  items: { icon: React.ElementType; label: string; path: string; badge?: number }[];
 }
 
-const adminNavSections: NavSection[] = [
-  {
-    title: "Overview",
-    items: [
-      { icon: LayoutDashboard, label: "Overview", path: "/admin" },
-      { icon: Bot, label: "AI PM", path: "/admin/ai-pm" },
-    ],
-  },
-  {
-    title: "AI Tools",
-    items: [
-      { icon: Sparkles, label: "Agents", path: "/admin/agents" },
-      { icon: ClipboardList, label: "Project Planner", path: "/admin/project-planner" },
-    ],
-  },
-  {
-    title: "Work",
-    items: [
-      { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
-      { icon: Inbox, label: "My Tasks", path: "/admin/tasks" },
-      { icon: FileText, label: "Briefs", path: "/admin/briefs" },
-    ],
-  },
-  {
-    title: "People",
-    items: [
-      { icon: Target, label: "Leads", path: "/admin/leads" },
-      { icon: Users, label: "Clients", path: "/admin/clients" },
-    ],
-  },
-  {
-    title: "Communication",
-    items: [
-      { icon: MessageSquare, label: "Inbox", path: "/admin/inbox" },
-      { icon: Clock, label: "Standups", path: "/admin/standups" },
-      { icon: Calendar, label: "Meetings", path: "/admin/meetings" },
-    ],
-  },
-  {
-    title: "Admin",
-    items: [
-      { icon: UserCog, label: "Users", path: "/admin/users" },
-      { icon: Wrench, label: "Tools", path: "/admin/tools" },
-      { icon: Link2, label: "Integrations", path: "/admin/integrations" },
-      { icon: Settings, label: "Settings", path: "/admin/settings" },
-    ],
-  },
-];
-
 const clientNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/client" },
-  { icon: FolderKanban, label: "My Projects", path: "/client/projects" },
-  { icon: Plus, label: "New Brief", path: "/client/new-brief" },
-  { icon: MessageSquare, label: "Messages", path: "/client/messages" },
-  { icon: Bell, label: "Notifications", path: "/client/notifications" },
+  { icon: Home, label: "Dashboard", path: "/client" },
+  { icon: Briefcase, label: "My Initiatives", path: "/client/projects" },
+  { icon: Package, label: "New Brief", path: "/client/new-brief" },
+  { icon: Network, label: "Messages", path: "/client/messages" },
   { icon: Settings, label: "Settings", path: "/client/settings" },
 ];
 
 // Bottom nav items (limited for mobile)
 const adminBottomNav = [
-  { icon: Home, label: "Home", path: "/admin" },
-  { icon: FolderKanban, label: "Projects", path: "/admin/projects" },
-  { icon: Inbox, label: "Tasks", path: "/admin/tasks" },
-  { icon: Sparkles, label: "Agents", path: "/admin/agents" },
+  { icon: Radio, label: "Command", path: "/command" },
+  { icon: Briefcase, label: "Work", path: "/work" },
+  { icon: Brain, label: "Intel", path: "/intelligence" },
+  { icon: Network, label: "Network", path: "/network" },
 ];
 
 const clientBottomNav = [
   { icon: Home, label: "Home", path: "/client" },
-  { icon: FolderKanban, label: "Projects", path: "/client/projects" },
-  { icon: Plus, label: "Brief", path: "/client/new-brief" },
-  { icon: MessageSquare, label: "Messages", path: "/client/messages" },
+  { icon: Briefcase, label: "Initiatives", path: "/client/projects" },
+  { icon: Package, label: "Brief", path: "/client/new-brief" },
+  { icon: Network, label: "Messages", path: "/client/messages" },
 ];
 
 export const Sidebar = ({ userType }: SidebarProps) => {
@@ -127,9 +69,32 @@ export const Sidebar = ({ userType }: SidebarProps) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(adminNavSections.map(s => s.title))
-  );
+  const [operationsExpanded, setOperationsExpanded] = useState(false);
+  
+  // Get signal count for badge
+  const { signals } = useIntelligence();
+  const unacknowledgedCount = signals.filter(s => !s.acknowledged).length;
+
+  const adminNavSections: NavSection[] = [
+    {
+      title: "Primary",
+      collapsible: false,
+      items: [
+        { icon: Radio, label: "Command", path: "/command", badge: unacknowledgedCount > 0 ? unacknowledgedCount : undefined },
+        { icon: Briefcase, label: "Work", path: "/work" },
+        { icon: Brain, label: "Intelligence", path: "/intelligence" },
+        { icon: Network, label: "Network", path: "/network" },
+        { icon: Package, label: "Assets", path: "/assets" },
+      ],
+    },
+    {
+      title: "Operations",
+      collapsible: true,
+      items: [
+        { icon: Settings, label: "Operations", path: "/operations" },
+      ],
+    },
+  ];
 
   useEffect(() => {
     fetchUserProfile();
@@ -179,21 +144,9 @@ export const Sidebar = ({ userType }: SidebarProps) => {
   };
 
   const getRoleLabel = () => {
-    if (userRole === "admin") return "Project Manager";
-    if (userRole === "client") return "Client";
+    if (userRole === "admin") return "Operator";
+    if (userRole === "client") return "Principal";
     return "User";
-  };
-
-  const toggleSection = (title: string) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(title)) {
-        next.delete(title);
-      } else {
-        next.add(title);
-      }
-      return next;
-    });
   };
 
   const NavContent = () => (
@@ -221,40 +174,73 @@ export const Sidebar = ({ userType }: SidebarProps) => {
         {userType === "admin" ? (
           <nav className="space-y-1">
             {adminNavSections.map((section) => (
-              <Collapsible 
-                key={section.title}
-                open={expandedSections.has(section.title)}
-                onOpenChange={() => toggleSection(section.title)}
-              >
-                <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-white/40 uppercase tracking-wider hover:text-white/60 transition-colors">
-                  {section.title}
-                  <ChevronDown className={cn(
-                    "h-3 w-3 transition-transform",
-                    expandedSections.has(section.title) && "rotate-180"
-                  )} />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-0.5">
+              section.collapsible ? (
+                <Collapsible 
+                  key={section.title}
+                  open={operationsExpanded}
+                  onOpenChange={setOperationsExpanded}
+                  className="mt-4"
+                >
+                  <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-white/40 uppercase tracking-wider hover:text-white/60 transition-colors">
+                    {section.title}
+                    <ChevronDown className={cn(
+                      "h-3 w-3 transition-transform",
+                      operationsExpanded && "rotate-180"
+                    )} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-0.5">
+                    {section.items.map((item) => {
+                      const isActive = location.pathname.startsWith(item.path);
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group",
+                            isActive
+                              ? "bg-white/10 text-white font-medium backdrop-blur-sm"
+                              : "text-white/70 hover:text-white hover:bg-white/5"
+                          )}
+                        >
+                          <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-primary")} />
+                          <span className="text-sm">{item.label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <div key={section.title} className="space-y-0.5">
                   {section.items.map((item) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive = location.pathname === item.path || 
+                      (item.path !== "/command" && location.pathname.startsWith(item.path));
                     return (
                       <NavLink
                         key={item.path}
                         to={item.path}
                         onClick={() => setMobileMenuOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 relative group",
+                          "flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 relative group",
                           isActive
                             ? "bg-white/10 text-white font-medium backdrop-blur-sm"
                             : "text-white/70 hover:text-white hover:bg-white/5"
                         )}
                       >
-                        <item.icon className={cn("w-4 h-4 flex-shrink-0", isActive && "text-primary")} />
-                        <span className="text-sm">{item.label}</span>
+                        <div className="flex items-center gap-3">
+                          <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-primary")} />
+                          <span className="text-sm">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge variant="secondary" className="h-5 w-5 p-0 justify-center text-xs">
+                            {item.badge}
+                          </Badge>
+                        )}
                       </NavLink>
                     );
                   })}
-                </CollapsibleContent>
-              </Collapsible>
+                </div>
+              )
             ))}
           </nav>
         ) : (
@@ -311,8 +297,8 @@ export const Sidebar = ({ userType }: SidebarProps) => {
           </SheetContent>
         </Sheet>
 
-        <h1 className="font-semibold text-white">
-          {userType === "admin" ? "SMAIT Admin" : "SMAIT Portal"}
+        <h1 className="font-semibold text-white tracking-tight">
+          {userType === "admin" ? "SMAIT" : "SMAIT Portal"}
         </h1>
 
         <Avatar className="w-8 h-8">
@@ -326,7 +312,8 @@ export const Sidebar = ({ userType }: SidebarProps) => {
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/40 backdrop-blur-xl border-t border-white/10 z-50 flex items-center justify-around px-2 safe-area-bottom">
         {bottomNavItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path ||
+            (item.path !== "/command" && location.pathname.startsWith(item.path));
           return (
             <NavLink
               key={item.path}
