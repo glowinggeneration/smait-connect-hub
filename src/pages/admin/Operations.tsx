@@ -2,17 +2,16 @@ import { useState, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCog, Wrench, Link2, Settings, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-// Lazy load tab content components
 const UsersContent = lazy(() => import("@/components/hub/UsersContent"));
 const ToolsContent = lazy(() => import("@/components/hub/ToolsContent"));
 const IntegrationsContent = lazy(() => import("@/components/hub/IntegrationsContent"));
 const SettingsContent = lazy(() => import("@/components/hub/SettingsContent"));
 
 const TabLoader = () => (
-  <div className="flex items-center justify-center h-96">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
   </div>
 );
 
@@ -26,45 +25,53 @@ const Operations = () => {
 
   return (
     <DashboardLayout userType="admin">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Operations</h1>
-          <p className="text-muted-foreground text-sm">
+      <div className="space-y-6 max-w-6xl">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Operations</h1>
+          <p className="text-sm text-muted-foreground">
             System configuration and team management
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="bg-black/30 border border-white/10 p-1">
-            <TabsTrigger value="team" className="gap-2 data-[state=active]:bg-white/10">
-              <UserCog className="w-4 h-4" />
+          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-6">
+            <TabsTrigger 
+              value="team" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+            >
               Team
             </TabsTrigger>
-            <TabsTrigger value="tools" className="gap-2 data-[state=active]:bg-white/10">
-              <Wrench className="w-4 h-4" />
+            <TabsTrigger 
+              value="tools" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+            >
               Tools
             </TabsTrigger>
-            <TabsTrigger value="integrations" className="gap-2 data-[state=active]:bg-white/10">
-              <Link2 className="w-4 h-4" />
+            <TabsTrigger 
+              value="integrations" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+            >
               Integrations
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2 data-[state=active]:bg-white/10">
-              <Settings className="w-4 h-4" />
+            <TabsTrigger 
+              value="settings" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+            >
               Settings
             </TabsTrigger>
           </TabsList>
 
           <Suspense fallback={<TabLoader />}>
-            <TabsContent value="team" className="mt-0">
+            <TabsContent value="team" className="mt-6">
               <UsersContent />
             </TabsContent>
-            <TabsContent value="tools" className="mt-0">
+            <TabsContent value="tools" className="mt-6">
               <ToolsContent />
             </TabsContent>
-            <TabsContent value="integrations" className="mt-0">
+            <TabsContent value="integrations" className="mt-6">
               <IntegrationsContent />
             </TabsContent>
-            <TabsContent value="settings" className="mt-0">
+            <TabsContent value="settings" className="mt-6">
               <SettingsContent />
             </TabsContent>
           </Suspense>

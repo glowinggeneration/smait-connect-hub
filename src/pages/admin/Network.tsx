@@ -2,16 +2,15 @@ import { useState, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Target, Building2, MessageSquare, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-// Lazy load tab content components
 const LeadsContent = lazy(() => import("@/components/hub/LeadsContent"));
 const ClientsContent = lazy(() => import("@/components/hub/ClientsContent"));
 const InboxContent = lazy(() => import("@/components/hub/InboxContent"));
 
 const TabLoader = () => (
-  <div className="flex items-center justify-center h-96">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
   </div>
 );
 
@@ -25,38 +24,44 @@ const Network = () => {
 
   return (
     <DashboardLayout userType="admin">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Network</h1>
-          <p className="text-muted-foreground text-sm">
-            Relationships, exposure, and communication
+      <div className="space-y-6 max-w-6xl">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Network</h1>
+          <p className="text-sm text-muted-foreground">
+            Relationships, prospects, and communication
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="bg-black/30 border border-white/10 p-1">
-            <TabsTrigger value="relationships" className="gap-2 data-[state=active]:bg-white/10">
-              <Building2 className="w-4 h-4" />
+          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-6">
+            <TabsTrigger 
+              value="relationships" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+            >
               Relationships
             </TabsTrigger>
-            <TabsTrigger value="prospects" className="gap-2 data-[state=active]:bg-white/10">
-              <Target className="w-4 h-4" />
+            <TabsTrigger 
+              value="prospects" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+            >
               Prospects
             </TabsTrigger>
-            <TabsTrigger value="communication" className="gap-2 data-[state=active]:bg-white/10">
-              <MessageSquare className="w-4 h-4" />
+            <TabsTrigger 
+              value="communication" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+            >
               Communication
             </TabsTrigger>
           </TabsList>
 
           <Suspense fallback={<TabLoader />}>
-            <TabsContent value="relationships" className="mt-0">
+            <TabsContent value="relationships" className="mt-6">
               <ClientsContent />
             </TabsContent>
-            <TabsContent value="prospects" className="mt-0">
+            <TabsContent value="prospects" className="mt-6">
               <LeadsContent />
             </TabsContent>
-            <TabsContent value="communication" className="mt-0">
+            <TabsContent value="communication" className="mt-6">
               <InboxContent />
             </TabsContent>
           </Suspense>
