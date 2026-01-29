@@ -55,7 +55,7 @@ const Login = () => {
 
       {/* Back navigation */}
       <a 
-        href="https://www.smait.co.za" 
+        href="https://smait.co.za/" 
         className="absolute top-6 left-6 z-20 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -149,7 +149,7 @@ const Login = () => {
         <p className="text-center text-xs text-muted-foreground mt-6">
           Access restricted to authorized personnel.{" "}
           <a
-            href="https://www.smait.co.za"
+            href="https://smait.co.za/"
             className="text-foreground hover:underline transition-colors"
           >
             Request access
