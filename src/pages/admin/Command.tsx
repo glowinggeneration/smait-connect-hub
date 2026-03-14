@@ -42,16 +42,29 @@ const Command = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase
-        .from("projects")
-        .select(`*, profiles:client_id(full_name)`)
-        .order("updated_at", { ascending: false })
-        .limit(8);
+      const [projectsRes, briefsRes] = await Promise.all([
+        supabase
+          .from("projects")
+          .select(`*, profiles:client_id(full_name)`)
+          .order("updated_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("project_briefs")
+          .select(`*, profiles:client_id(full_name)`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ]);
 
-      if (data) {
-        setInitiatives(data.map(p => ({
+      if (projectsRes.data) {
+        setInitiatives(projectsRes.data.map(p => ({
           ...p,
           client_name: p.profiles?.full_name,
+        })));
+      }
+      if (briefsRes.data) {
+        setBriefs(briefsRes.data.map(b => ({
+          ...b,
+          client_name: b.profiles?.full_name,
         })));
       }
       setLoading(false);
