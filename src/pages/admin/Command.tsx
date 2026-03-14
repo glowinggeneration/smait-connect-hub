@@ -50,7 +50,7 @@ const Command = () => {
           .limit(8),
         supabase
           .from("project_briefs")
-          .select(`*, profiles:client_id(full_name)`)
+          .select(`*`)
           .order("created_at", { ascending: false })
           .limit(6),
       ]);
