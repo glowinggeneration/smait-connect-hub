@@ -37,6 +37,7 @@ const Command = () => {
   const { signals, metrics, getDecisionBriefs, getActiveRisks, acknowledgeSignal, actOnSignal } = useIntelligence();
   const { isRunning } = useAgentRun();
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [briefs, setBriefs] = useState<Brief[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
