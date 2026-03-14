@@ -23,6 +23,15 @@ interface Initiative {
   client_name?: string;
 }
 
+interface Brief {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  created_at: string;
+  client_name?: string;
+}
+
 const Command = () => {
   const navigate = useNavigate();
   const { signals, metrics, getDecisionBriefs, getActiveRisks, acknowledgeSignal, actOnSignal } = useIntelligence();
