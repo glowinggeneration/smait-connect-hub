@@ -63,8 +63,11 @@ const Command = () => {
       }
       if (briefsRes.data) {
         setBriefs(briefsRes.data.map(b => ({
-          ...b,
-          client_name: b.profiles?.full_name,
+          id: b.id,
+          title: b.title,
+          category: b.category,
+          status: b.status,
+          created_at: b.created_at,
         })));
       }
       setLoading(false);
