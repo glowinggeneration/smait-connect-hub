@@ -260,6 +260,61 @@ const Command = () => {
             </div>
           </section>
         </div>
+
+        {/* Recent Intake - Briefs */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              Recent Intake
+            </h2>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate("/work?tab=briefs")}
+              className="h-7 text-xs gap-1"
+            >
+              View All
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+          
+          <div className="panel">
+            {briefs.length === 0 ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <p className="text-sm">No briefs submitted</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {briefs.map(brief => {
+                  const briefStatusStyle = brief.status === "approved" 
+                    ? "state-stable" 
+                    : brief.status === "rejected" 
+                      ? "state-risk" 
+                      : "state-active";
+                  return (
+                    <div
+                      key={brief.id}
+                      className="ledger-row cursor-pointer"
+                      onClick={() => navigate("/work?tab=briefs")}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {brief.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {brief.category} · {format(new Date(brief.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                      <span className={cn("text-xs shrink-0 capitalize", briefStatusStyle)}>
+                        {brief.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
       </div>
     </DashboardLayout>
   );
