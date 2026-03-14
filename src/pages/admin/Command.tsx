@@ -23,25 +23,51 @@ interface Initiative {
   client_name?: string;
 }
 
+interface Brief {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  created_at: string;
+  client_name?: string;
+}
+
 const Command = () => {
   const navigate = useNavigate();
   const { signals, metrics, getDecisionBriefs, getActiveRisks, acknowledgeSignal, actOnSignal } = useIntelligence();
   const { isRunning } = useAgentRun();
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [briefs, setBriefs] = useState<Brief[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase
-        .from("projects")
-        .select(`*, profiles:client_id(full_name)`)
-        .order("updated_at", { ascending: false })
-        .limit(8);
+      const [projectsRes, briefsRes] = await Promise.all([
+        supabase
+          .from("projects")
+          .select(`*, profiles:client_id(full_name)`)
+          .order("updated_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("project_briefs")
+          .select(`*`)
+          .order("created_at", { ascending: false })
+          .limit(6),
+      ]);
 
-      if (data) {
-        setInitiatives(data.map(p => ({
+      if (projectsRes.data) {
+        setInitiatives(projectsRes.data.map(p => ({
           ...p,
           client_name: p.profiles?.full_name,
+        })));
+      }
+      if (briefsRes.data) {
+        setBriefs(briefsRes.data.map(b => ({
+          id: b.id,
+          title: b.title,
+          category: b.category,
+          status: b.status,
+          created_at: b.created_at,
         })));
       }
       setLoading(false);
@@ -234,6 +260,61 @@ const Command = () => {
             </div>
           </section>
         </div>
+
+        {/* Recent Intake - Briefs */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              Recent Intake
+            </h2>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate("/work?tab=briefs")}
+              className="h-7 text-xs gap-1"
+            >
+              View All
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+          
+          <div className="panel">
+            {briefs.length === 0 ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <p className="text-sm">No briefs submitted</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {briefs.map(brief => {
+                  const briefStatusStyle = brief.status === "approved" 
+                    ? "state-stable" 
+                    : brief.status === "rejected" 
+                      ? "state-risk" 
+                      : "state-active";
+                  return (
+                    <div
+                      key={brief.id}
+                      className="ledger-row cursor-pointer"
+                      onClick={() => navigate("/work?tab=briefs")}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {brief.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {brief.category} · {format(new Date(brief.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                      <span className={cn("text-xs shrink-0 capitalize", briefStatusStyle)}>
+                        {brief.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
       </div>
     </DashboardLayout>
   );
