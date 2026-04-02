@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AgentRunProvider } from "@/contexts/AgentRunContext";
 import { IntelligenceProvider } from "@/contexts/IntelligenceContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ActiveRunBanner } from "@/components/agents/ActiveRunBanner";
 import Login from "./pages/Login";
 
@@ -34,70 +36,80 @@ import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+const AppContent = () => {
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
 
   return (
+    <>
+      <ActiveRunBanner />
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        
+        {/* Consolidated Admin Routes */}
+        <Route path="/command" element={<ProtectedRoute><Command /></ProtectedRoute>} />
+        <Route path="/work" element={<ProtectedRoute><Work /></ProtectedRoute>} />
+        <Route path="/intelligence" element={<ProtectedRoute><Intelligence /></ProtectedRoute>} />
+        <Route path="/network" element={<ProtectedRoute><Network /></ProtectedRoute>} />
+        <Route path="/assets" element={<ProtectedRoute><Assets /></ProtectedRoute>} />
+        <Route path="/operations" element={<ProtectedRoute><Operations /></ProtectedRoute>} />
+        
+        {/* Legacy redirects */}
+        <Route path="/admin" element={<Navigate to="/command" replace />} />
+        <Route path="/admin/projects" element={<Navigate to="/work?tab=initiatives" replace />} />
+        <Route path="/admin/tasks" element={<Navigate to="/work?tab=assignments" replace />} />
+        <Route path="/admin/briefs" element={<Navigate to="/work?tab=briefs" replace />} />
+        <Route path="/admin/standups" element={<Navigate to="/work?tab=standups" replace />} />
+        <Route path="/admin/meetings" element={<Navigate to="/work?tab=calendar" replace />} />
+        <Route path="/admin/leads" element={<Navigate to="/network?tab=prospects" replace />} />
+        <Route path="/admin/clients" element={<Navigate to="/network?tab=relationships" replace />} />
+        <Route path="/admin/inbox" element={<Navigate to="/network?tab=communication" replace />} />
+        <Route path="/admin/agents" element={<Navigate to="/intelligence?tab=operators" replace />} />
+        <Route path="/admin/ai-pm" element={<Navigate to="/intelligence?tab=signals" replace />} />
+        <Route path="/admin/project-planner" element={<Navigate to="/intelligence?tab=planner" replace />} />
+        <Route path="/admin/users" element={<Navigate to="/operations?tab=team" replace />} />
+        <Route path="/admin/tools" element={<Navigate to="/operations?tab=tools" replace />} />
+        <Route path="/admin/integrations" element={<Navigate to="/operations?tab=integrations" replace />} />
+        <Route path="/admin/settings" element={<Navigate to="/operations?tab=settings" replace />} />
+        
+        {/* Detail pages */}
+        <Route path="/admin/project/:id" element={<ProtectedRoute><AdminProjectDetail /></ProtectedRoute>} />
+        <Route path="/admin/client/:clientId" element={<ProtectedRoute><AdminClientDetail /></ProtectedRoute>} />
+        
+        {/* Client Routes */}
+        <Route path="/client" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
+        <Route path="/client/projects" element={<ProtectedRoute><ClientProjects /></ProtectedRoute>} />
+        <Route path="/client/messages" element={<ProtectedRoute><ClientMessages /></ProtectedRoute>} />
+        <Route path="/client/calendar" element={<ProtectedRoute><ClientCalendar /></ProtectedRoute>} />
+        <Route path="/client/new-brief" element={<ProtectedRoute><ClientNewBrief /></ProtectedRoute>} />
+        <Route path="/client/notifications" element={<ProtectedRoute><ClientNotifications /></ProtectedRoute>} />
+        <Route path="/client/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+        <Route path="/client/project/:id" element={<ProtectedRoute><ClientProjectDetail /></ProtectedRoute>} />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
+
+const App = () => {
+  return (
     <QueryClientProvider client={queryClient}>
-      <AgentRunProvider>
-        <IntelligenceProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ActiveRunBanner />
-              <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/login" element={<Login />} />
-                
-                {/* Consolidated Admin Routes */}
-                <Route path="/command" element={<Command />} />
-                <Route path="/work" element={<Work />} />
-                <Route path="/intelligence" element={<Intelligence />} />
-                <Route path="/network" element={<Network />} />
-                <Route path="/assets" element={<Assets />} />
-                <Route path="/operations" element={<Operations />} />
-                
-                {/* Legacy redirects */}
-                <Route path="/admin" element={<Navigate to="/command" replace />} />
-                <Route path="/admin/projects" element={<Navigate to="/work?tab=initiatives" replace />} />
-                <Route path="/admin/tasks" element={<Navigate to="/work?tab=assignments" replace />} />
-                <Route path="/admin/briefs" element={<Navigate to="/work?tab=briefs" replace />} />
-                <Route path="/admin/standups" element={<Navigate to="/work?tab=standups" replace />} />
-                <Route path="/admin/meetings" element={<Navigate to="/work?tab=calendar" replace />} />
-                <Route path="/admin/leads" element={<Navigate to="/network?tab=prospects" replace />} />
-                <Route path="/admin/clients" element={<Navigate to="/network?tab=relationships" replace />} />
-                <Route path="/admin/inbox" element={<Navigate to="/network?tab=communication" replace />} />
-                <Route path="/admin/agents" element={<Navigate to="/intelligence?tab=operators" replace />} />
-                <Route path="/admin/ai-pm" element={<Navigate to="/intelligence?tab=signals" replace />} />
-                <Route path="/admin/project-planner" element={<Navigate to="/intelligence?tab=planner" replace />} />
-                <Route path="/admin/users" element={<Navigate to="/operations?tab=team" replace />} />
-                <Route path="/admin/tools" element={<Navigate to="/operations?tab=tools" replace />} />
-                <Route path="/admin/integrations" element={<Navigate to="/operations?tab=integrations" replace />} />
-                <Route path="/admin/settings" element={<Navigate to="/operations?tab=settings" replace />} />
-                
-                {/* Detail pages */}
-                <Route path="/admin/project/:id" element={<AdminProjectDetail />} />
-                <Route path="/admin/client/:clientId" element={<AdminClientDetail />} />
-                
-                {/* Client Routes */}
-                <Route path="/client" element={<ClientDashboard />} />
-                <Route path="/client/projects" element={<ClientProjects />} />
-                <Route path="/client/messages" element={<ClientMessages />} />
-                <Route path="/client/calendar" element={<ClientCalendar />} />
-                <Route path="/client/new-brief" element={<ClientNewBrief />} />
-                <Route path="/client/notifications" element={<ClientNotifications />} />
-                <Route path="/client/settings" element={<AdminSettings />} />
-                <Route path="/client/project/:id" element={<ClientProjectDetail />} />
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </IntelligenceProvider>
-      </AgentRunProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AgentRunProvider>
+            <IntelligenceProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <AppContent />
+              </TooltipProvider>
+            </IntelligenceProvider>
+          </AgentRunProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
