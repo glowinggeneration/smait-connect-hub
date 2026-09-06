@@ -76,6 +76,8 @@ const stages = [
   { id: "closed_lost", label: "Closed Lost", color: "bg-red-500/20 text-red-400 border-red-500/30" },
 ];
 
+const LEADS_PAGE_SIZE = 25;
+
 const LeadsContent = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -109,6 +111,8 @@ const LeadsContent = () => {
     });
     return () => { mounted = false; };
   }, [navigate]);
+
+  const [leadsPage, setLeadsPage] = useState(0);
 
   const { data: leads, isLoading: leadsLoading, isFetching: leadsFetching } = useQuery({
     queryKey: ["leads", leadsPage],
