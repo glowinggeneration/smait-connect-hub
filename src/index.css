@@ -332,3 +332,18 @@
     transform: translateX(100%);
   }
 }
+
+/* FolderPreview: sheets fan out of the folder on hover */
+[data-fan] {
+  transform: translate(0, 0) rotate(0deg);
+}
+.group\/folder:hover [data-fan],
+.group\/folder:focus-visible [data-fan] {
+  transform: translate(var(--fan-x), -70%) rotate(var(--fan-r));
+}
+@media (prefers-reduced-motion: reduce) {
+  .group\/folder:hover [data-fan],
+  .group\/folder:focus-visible [data-fan] {
+    transform: none;
+  }
+}

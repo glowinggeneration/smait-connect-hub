@@ -101,7 +101,6 @@ export const FolderPreview = React.forwardRef<HTMLButtonElement, FolderPreviewPr
                     s.sheet,
                   )}
                   style={{
-                    transform: "translateY(0) rotate(0deg)",
                     ["--fan-x" as string]: `${offset * 26}px`,
                     ["--fan-r" as string]: `${offset * 10}deg`,
                   }}
