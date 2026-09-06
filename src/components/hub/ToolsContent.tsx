@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, Plus, Star, Trash2, Wrench, ExternalLink, Loader2 } from "lucide-react";
+import { Edit, Plus, Trash2, Wrench, ExternalLink, Loader2 } from "lucide-react";
+import { StarRating } from "@/components/ui/star-rating";
 
 interface Tool {
   id: string;
