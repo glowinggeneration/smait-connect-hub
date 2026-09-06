@@ -166,7 +166,7 @@ const UsersContent = () => {
       });
 
       if (response.error) {
-        throw new Error(response.errorMessage || 'Failed to create user');
+        throw new Error(response.error.message || 'Failed to create user');
       }
 
       if (response.data?.error) {
@@ -184,7 +184,7 @@ const UsersContent = () => {
         const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => {
           if (err.path[0]) {
-            fieldErrors[err.path[0].toString()] = errMessage;
+            fieldErrors[err.path[0].toString()] = err.message;
           }
         });
         setErrors(fieldErrors);
@@ -225,7 +225,7 @@ const UsersContent = () => {
       });
 
       if (response.error) {
-        throw new Error(response.errorMessage || 'Failed to delete user');
+        throw new Error(response.error.message || 'Failed to delete user');
       }
 
       if (response.data?.error) {

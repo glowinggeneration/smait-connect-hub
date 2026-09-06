@@ -124,7 +124,7 @@ const ClientsContent = () => {
 
       const response = await supabase.functions.invoke('create-client', { body: validatedData });
 
-      if (response.error) throw new Error(response.errorMessage || 'Failed to create client');
+      if (response.error) throw new Error(response.error.message || 'Failed to create client');
       if (response.data?.error) throw new Error(response.data.error);
 
       toast.success("Client Created", { description: `${validatedData.full_name} has been added successfully.` });
@@ -136,7 +136,7 @@ const ClientsContent = () => {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => {
-          if (err.path[0]) fieldErrors[err.path[0].toString()] = errMessage;
+          if (err.path[0]) fieldErrors[err.path[0].toString()] = err.message;
         });
         setErrors(fieldErrors);
       } else {
