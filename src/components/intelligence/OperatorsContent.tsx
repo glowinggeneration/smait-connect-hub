@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAgentRun } from "@/contexts/AgentRunContext";
 import { AgentRunHistory } from "@/components/agents/AgentRunHistory";
+import { OperatorConsole } from "@/components/intelligence/OperatorConsole";
 import { 
   Play, Loader2, Circle, ChevronRight
 } from "lucide-react";
@@ -82,6 +83,12 @@ const OperatorsContent = () => {
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
           >
             Status
+          </TabsTrigger>
+          <TabsTrigger 
+            value="console" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+          >
+            Console
           </TabsTrigger>
           <TabsTrigger 
             value="history" 
@@ -185,6 +192,10 @@ const OperatorsContent = () => {
                 </p>
               </div>
             )}
+
+            <div className="lg:col-span-2">
+              <OperatorConsole />
+            </div>
           </div>
         </TabsContent>
 
@@ -219,6 +230,10 @@ const OperatorsContent = () => {
               </div>
             </ScrollArea>
           </div>
+        </TabsContent>
+
+        <TabsContent value="console" className="mt-6">
+          <OperatorConsole />
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
