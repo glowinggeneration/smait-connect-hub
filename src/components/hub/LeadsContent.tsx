@@ -347,7 +347,7 @@ const LeadsContent = () => {
       toast.success("Lead converted to project!");
       navigate("/admin/work?tab=projects");
     },
-    onError: () => toast.error("Failed to convert lead to project"),
+    onError: (err: any) => toast.error(err?.message || "Failed to convert lead to project"),
   });
 
   const resetForm = () => {
