@@ -16,7 +16,7 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { FolderPreview } from "@/components/ui/folder-preview";
-import { getCachedUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 
 interface Asset {
   id: string;
@@ -124,7 +124,7 @@ const Assets = () => {
 
     setUploading(true);
     try {
-      const user = await getCachedUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("You need to sign in again");
 
       for (const file of pendingFiles) {
