@@ -114,9 +114,9 @@ const Command = () => {
               System State
             </h2>
             {isRunning && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="text-xs flex items-center gap-1.5">
                 <Circle className="h-2 w-2 fill-state-active text-state-active" />
-                Operators active
+                <AnimatedShinyText className="text-xs">Operators active</AnimatedShinyText>
               </span>
             )}
           </div>
@@ -124,30 +124,39 @@ const Command = () => {
           <div className="panel">
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
               <div className="p-4">
-                <p className="text-2xl font-semibold">{metrics.activeInitiatives}</p>
+                <p className="text-2xl font-semibold">
+                  <NumberTicker value={metrics.activeInitiatives} />
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">Active Initiatives</p>
               </div>
               <div className="p-4">
-                <p className="text-2xl font-semibold">{metrics.pendingAssignments}</p>
+                <p className="text-2xl font-semibold">
+                  <NumberTicker value={metrics.pendingAssignments} delay={80} />
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">Open Assignments</p>
               </div>
               <div className="p-4">
                 <p className={cn(
                   "text-2xl font-semibold",
                   metrics.overdueItems > 0 && "state-risk"
-                )}>{metrics.overdueItems}</p>
+                )}>
+                  <NumberTicker value={metrics.overdueItems} delay={160} />
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">Overdue</p>
               </div>
               <div className="p-4">
                 <p className={cn(
                   "text-2xl font-semibold",
                   metrics.atRiskInitiatives > 0 && "state-risk"
-                )}>{metrics.atRiskInitiatives}</p>
+                )}>
+                  <NumberTicker value={metrics.atRiskInitiatives} delay={240} />
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">At Risk</p>
               </div>
             </div>
           </div>
         </section>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Decision Queue - Primary focus */}
