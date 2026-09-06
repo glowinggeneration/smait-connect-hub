@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ShineBorder } from "@/components/ui/shine-border";
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { useAgentRun } from "@/contexts/AgentRunContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -160,7 +161,8 @@ const Command = () => {
               </span>
             </div>
             
-            <div className="panel">
+            <div className="panel relative">
+              <ShineBorder duration={16} borderWidth={1} />
               {(decisionBriefs.length === 0 && activeRisks.length === 0) ? (
                 <div className="flex items-center justify-center py-12 text-muted-foreground">
                   <div className="text-center">
