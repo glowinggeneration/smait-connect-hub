@@ -260,8 +260,16 @@ const InboxContent = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className={`text-sm truncate ${!isRead ? "font-semibold" : ""}`}>
-                              {item.profiles?.full_name || "System"}
+                            <span className="flex items-center gap-1.5 min-w-0">
+                              {!isRead && (
+                                <span className="relative flex size-2 shrink-0" aria-label="Unread">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                                  <span className="relative inline-flex size-2 rounded-full bg-primary" />
+                                </span>
+                              )}
+                              <span className={`text-sm truncate ${!isRead ? "font-semibold" : ""}`}>
+                                {item.profiles?.full_name || "System"}
+                              </span>
                             </span>
                             <div className="flex items-center gap-1">
                               {getTypeIcon(item.action_type)}
