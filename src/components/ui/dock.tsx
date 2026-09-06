@@ -113,4 +113,4 @@ export const DockIcon = ({ className, children, ...props }: DockIconProps) => {
 };
 DockIcon.displayName = "DockIcon";
 
-export { dockVariants };
+
