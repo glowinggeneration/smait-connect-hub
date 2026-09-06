@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { FolderPreview } from "@/components/ui/folder-preview";
 
 interface Asset {
   id: string;
@@ -98,13 +99,27 @@ const Assets = () => {
     }
   };
 
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+
+  const collections = Array.from(
+    assets.reduce((map, asset) => {
+      const key = asset.projectName || asset.category;
+      const bucket = map.get(key) ?? [];
+      bucket.push(asset);
+      map.set(key, bucket);
+      return map;
+    }, new Map<string, Asset[]>())
+  ).sort((a, b) => b[1].length - a[1].length);
+
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.projectName?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    if (activeTab === "all") return matchesSearch;
-    return matchesSearch && asset.type === activeTab;
+    const matchesFolder =
+      !activeFolder || (asset.projectName || asset.category) === activeFolder;
+    if (activeTab === "all") return matchesSearch && matchesFolder;
+    return matchesSearch && matchesFolder && asset.type === activeTab;
   });
 
   return (
@@ -129,6 +144,45 @@ const Assets = () => {
             className="pl-9"
           />
         </div>
+
+        {!loading && collections.length > 0 && (
+          <div className="panel p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Collections
+              </p>
+              {activeFolder && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setActiveFolder(null)}
+                >
+                  Clear filter
+                </Button>
+              )}
+            </div>
+            <ScrollArea className="w-full">
+              <div className="flex gap-2 pb-2">
+                {collections.map(([name, items]) => (
+                  <FolderPreview
+                    key={name}
+                    label={name}
+                    meta={`${items.length} item${items.length === 1 ? "" : "s"}`}
+                    items={items.map((i) => i.name)}
+                    count={items.length}
+                    tone={activeFolder === name ? "active" : "neutral"}
+                    selected={activeFolder === name}
+                    className="shrink-0"
+                    onClick={() =>
+                      setActiveFolder((current) => (current === name ? null : name))
+                    }
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-6">
