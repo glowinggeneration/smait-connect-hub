@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { DotBadge } from "@/components/ui/dot-badge";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Search, 
@@ -166,6 +168,35 @@ const InboxContent = () => {
         </div>
       </div>
 
+      {/* Unread summary alert */}
+      {unreadCount > 0 && (
+        <Alert>
+          <div className="flex w-full items-start gap-3">
+            <Avatar className="w-10 h-10 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                {getInitials(activities.find((a) => !readIds.has(a.id))?.profiles?.full_name || "SY")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <AlertTitle>
+                {activities.find((a) => !readIds.has(a.id))?.profiles?.full_name || "System"} has new activity
+              </AlertTitle>
+              <AlertDescription>
+                {unreadCount} unread {unreadCount === 1 ? "item" : "items"} waiting for your review.
+              </AlertDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setReadIds(new Set(activities.map((a) => a.id)))}
+            >
+              Mark all read
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
@@ -175,7 +206,10 @@ const InboxContent = () => {
             </div>
             <div>
               <p className="text-2xl font-bold">{unreadCount}</p>
-              <p className="text-xs text-muted-foreground">Unread</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">Unread</p>
+                {unreadCount > 0 && <DotBadge pulse tone="active" className="text-[10px] px-1.5 py-0">Live</DotBadge>}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -229,8 +263,16 @@ const InboxContent = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className={`text-sm truncate ${!isRead ? "font-semibold" : ""}`}>
-                              {item.profiles?.full_name || "System"}
+                            <span className="flex items-center gap-1.5 min-w-0">
+                              {!isRead && (
+                                <span className="relative flex size-2 shrink-0" aria-label="Unread">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                                  <span className="relative inline-flex size-2 rounded-full bg-primary" />
+                                </span>
+                              )}
+                              <span className={`text-sm truncate ${!isRead ? "font-semibold" : ""}`}>
+                                {item.profiles?.full_name || "System"}
+                              </span>
                             </span>
                             <div className="flex items-center gap-1">
                               {getTypeIcon(item.action_type)}
