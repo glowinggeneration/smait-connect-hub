@@ -6,6 +6,7 @@ import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BorderBeam } from "@/components/ui/border-beam";
+import { FloatingParticles } from "@/components/ui/floating-particles";
 import marsBackground from "@/assets/mars-background.jpg";
 
 const Login = () => {
@@ -76,6 +77,9 @@ const Login = () => {
         style={{ backgroundImage: `url(${marsBackground})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
+
+      {/* Floating particle field */}
+      <FloatingParticles count={80} opacity={0.7} />
 
       {/* Back navigation */}
       <a 
