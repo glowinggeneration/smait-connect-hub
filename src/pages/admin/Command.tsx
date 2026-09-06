@@ -160,7 +160,8 @@ const Command = () => {
               </span>
             </div>
             
-            <div className="panel">
+            <div className="panel relative">
+              <ShineBorder duration={16} borderWidth={1} />
               {(decisionBriefs.length === 0 && activeRisks.length === 0) ? (
                 <div className="flex items-center justify-center py-12 text-muted-foreground">
                   <div className="text-center">

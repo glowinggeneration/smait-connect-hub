@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BorderBeam } from "@/components/ui/border-beam";
 import marsBackground from "@/assets/mars-background.jpg";
 
 const Login = () => {
@@ -87,7 +88,8 @@ const Login = () => {
 
       {/* Login Panel */}
       <div className="relative z-10 w-full max-w-sm mx-4">
-        <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
+        <div className="relative bg-card border border-border rounded-lg p-8 shadow-sm">
+          <BorderBeam size={18} duration={10} borderWidth={1} />
           {/* Header */}
           <div className="mb-8">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
