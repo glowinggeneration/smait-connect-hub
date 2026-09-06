@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChatBubble } from "@/components/ui/chat-bubble";
 import { Send, Paperclip, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
@@ -215,39 +216,40 @@ const ClientMessages = () => {
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+            <div className="space-y-3">
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   No messages yet. Start a conversation!
                 </div>
               ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.is_mine ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                        message.is_mine
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="text-sm">{message.content}</p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          message.is_mine
-                            ? "text-primary-foreground/70"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {format(new Date(message.created_at), "HH:mm")}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                messages.map((message, index) => {
+                  const align = message.is_mine ? "end" : "start";
+                  const prev = messages[index - 1];
+                  const newSpeaker = !prev || prev.is_mine !== message.is_mine;
+                  const initials = message.is_mine
+                    ? "You"
+                    : (message.sender_name || "A").slice(0, 1).toUpperCase();
+                  return (
+                    <ChatBubble.Row key={message.id} align={align}>
+                      <ChatBubble.Avatar
+                        initials={initials}
+                        placeholder={!newSpeaker}
+                        className={message.is_mine ? "[&>span]:bg-foreground [&>span]:text-background" : undefined}
+                      />
+                      <ChatBubble.Body align={align}>
+                        {newSpeaker && !message.is_mine && (
+                          <ChatBubble.Header>{message.sender_name || "SMAIT Team"}</ChatBubble.Header>
+                        )}
+                        <ChatBubble.Bubble align={align}>
+                          {message.content}
+                        </ChatBubble.Bubble>
+                        <ChatBubble.Footer>
+                          {format(new Date(message.created_at), "HH:mm")}
+                        </ChatBubble.Footer>
+                      </ChatBubble.Body>
+                    </ChatBubble.Row>
+                  );
+                })
               )}
               <div ref={scrollRef} />
             </div>
