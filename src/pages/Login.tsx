@@ -136,13 +136,16 @@ const Login = () => {
 
           {/* Footer */}
           <div className="mt-6 pt-5 border-t border-border">
-            <button 
-              type="button" 
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-center"
+            <button
+              type="button"
+              onClick={handleResetRequest}
+              disabled={isResetting}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-center disabled:opacity-60"
             >
-              Request credential reset
+              {isResetting ? "Sending reset link..." : "Request credential reset"}
             </button>
           </div>
+
         </div>
 
         {/* Bottom text */}
