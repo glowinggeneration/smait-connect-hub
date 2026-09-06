@@ -7,6 +7,7 @@ import { AgentRunProvider } from "@/contexts/AgentRunContext";
 import { IntelligenceProvider } from "@/contexts/IntelligenceContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ActiveRunBanner } from "@/components/agents/ActiveRunBanner";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
@@ -34,10 +35,12 @@ import ClientProjectDetail from "./pages/client/ClientProjectDetail";
 import AdminSettings from "./pages/admin/AdminSettings";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
+  const location = useLocation();
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
@@ -45,6 +48,7 @@ const AppContent = () => {
   return (
     <>
       <ActiveRunBanner />
+      <ErrorBoundary key={location.pathname}>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
@@ -93,6 +97,7 @@ const AppContent = () => {
         
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </ErrorBoundary>
     </>
   );
 };
