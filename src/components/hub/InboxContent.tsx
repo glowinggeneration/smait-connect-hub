@@ -278,7 +278,15 @@ const InboxContent = () => {
                   </p>
                 </div>
               )}
+              {hasMore && !searchQuery && (
+                <div className="p-4 flex justify-center">
+                  <Button variant="outline" size="sm" onClick={() => fetchActivities(page + 1)} disabled={loadingMore}>
+                    {loadingMore ? "Loading..." : "Load more"}
+                  </Button>
+                </div>
+              )}
             </div>
+
           </ScrollArea>
         </Card>
 
