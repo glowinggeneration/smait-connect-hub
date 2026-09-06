@@ -86,7 +86,7 @@ const BriefsContent = () => {
         }
       }
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
@@ -116,7 +116,7 @@ const BriefsContent = () => {
 
       toast.success("Status Updated", { description: `Brief has been ${newStatus}.` });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };
@@ -136,7 +136,7 @@ const BriefsContent = () => {
       a.click();
       URL.revokeObjectURL(url);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };

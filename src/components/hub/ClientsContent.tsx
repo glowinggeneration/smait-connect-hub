@@ -95,7 +95,7 @@ const ClientsContent = () => {
         setClients([]);
       }
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error fetching clients", { description: errorMessage });
     } finally {
       setLoading(false);
@@ -132,7 +132,7 @@ const ClientsContent = () => {
       setIsDialogOpen(false);
       fetchClients();
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => {
@@ -153,7 +153,7 @@ const ClientsContent = () => {
       if (error) throw error;
       toast.success("Password Reset", { description: `A password reset link has been sent to ${client.email}.` });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };

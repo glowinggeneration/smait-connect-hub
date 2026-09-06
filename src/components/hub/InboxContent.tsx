@@ -66,7 +66,7 @@ const InboxContent = () => {
       setPage(pageIndex);
       setActivities((prev) => (pageIndex === 0 ? data || [] : [...prev, ...(data || [])]));
     } catch (error: unknown) {
-      const message = error instanceof Error ? errorMessage : "Something went wrong";
+      const message = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: message });
     } finally {
       setLoadingMore(false);
@@ -110,7 +110,7 @@ const InboxContent = () => {
       setSelectedItem(null);
       toast.success("Deleted", { description: "Activity has been deleted." });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };

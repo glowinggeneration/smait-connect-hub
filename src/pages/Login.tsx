@@ -28,7 +28,7 @@ const Login = () => {
       if (error) throw error;
       toast.success("Reset link sent. Check your email.");
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error(errorMessage || "Could not send reset link");
     } finally {
       setIsResetting(false);
@@ -60,7 +60,7 @@ const Login = () => {
         navigate("/client");
       }
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error(errorMessage || "Authentication failed");
     } finally {
       setIsLoading(false);

@@ -126,7 +126,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       if (error) throw error;
       setMilestones(data || []);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
@@ -157,7 +157,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
       setComments(commentsWithNames);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       console.error("Error fetching comments:", error);
     }
   };
@@ -173,7 +173,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       if (error) throw error;
       setAttachments(data || []);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       console.error("Error fetching attachments:", error);
     }
   };
@@ -197,7 +197,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       toast.success("Status Updated", { description: `Milestone marked as ${newStatus}` });
       fetchMilestones();
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };
@@ -224,7 +224,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       fetchComments(selectedMilestone.id);
       toast.success("Comment added");
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setSubmitting(false);
@@ -256,7 +256,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       fetchAttachments(selectedMilestone.id);
       toast.success("Link added");
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setSubmitting(false);
@@ -300,7 +300,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       fetchAttachments(selectedMilestone.id);
       toast.success("Image uploaded");
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setUploadingImage(false);
@@ -326,7 +326,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       fetchAttachments(selectedMilestone!.id);
       toast.success("Attachment removed");
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };

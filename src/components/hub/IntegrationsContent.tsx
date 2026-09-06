@@ -74,7 +74,7 @@ const IntegrationsContent = () => {
       if (error) throw error;
       setIntegrations(data || []);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       console.error("Error fetching integrations:", error);
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ const IntegrationsContent = () => {
       setIntegrations(integrations.filter((i) => i.provider !== provider));
       toast.success(`${PROVIDERS[provider as keyof typeof PROVIDERS].name} disconnected`);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Failed to disconnect: " + errorMessage);
     }
   };
@@ -136,7 +136,7 @@ const IntegrationsContent = () => {
       setConfigDialogOpen(false);
       setOauthConfig({ clientId: "", clientSecret: "", redirectUri: window.location.origin + "/admin/integrations/callback" });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Failed to configure: " + errorMessage);
     } finally {
       setConfiguring(false);

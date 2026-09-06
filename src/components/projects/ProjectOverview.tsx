@@ -140,7 +140,7 @@ export const ProjectOverview = ({
       toast.success("Project name updated");
       setIsEditingName(false);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error(errorMessage || "Failed to update project name");
       setEditedName(project.name);
     } finally {

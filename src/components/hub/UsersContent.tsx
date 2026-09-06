@@ -124,7 +124,7 @@ const UsersContent = () => {
         setUsers([]);
       }
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error fetching users", { description: errorMessage });
     } finally {
       setLoading(false);
@@ -179,7 +179,7 @@ const UsersContent = () => {
       setIsDialogOpen(false);
       fetchUsers();
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => {
@@ -203,7 +203,7 @@ const UsersContent = () => {
       
       toast.success("Password Reset", { description: `A password reset link has been sent to ${user.email}.` });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };
@@ -238,7 +238,7 @@ const UsersContent = () => {
       setUserToDelete(null);
       fetchUsers();
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error Deleting User", { description: errorMessage });
     } finally {
       setIsDeleting(false);

@@ -141,7 +141,7 @@ const ProjectsContent = () => {
       setPage(pageIndex);
       setProjects((prev) => (pageIndex === 0 ? projectsData || [] : [...prev, ...(projectsData || [])]));
     } catch (error: unknown) {
-      const message = error instanceof Error ? errorMessage : "Something went wrong";
+      const message = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: message });
     } finally {
       setLoadingMore(false);
@@ -192,7 +192,7 @@ const ProjectsContent = () => {
 
       toast.success("Progress Updated", { description: `Project is now ${progress}% complete` });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     }
   };
@@ -247,7 +247,7 @@ const ProjectsContent = () => {
       setIsDialogOpen(false);
       toast.success("Project Created", { description: `${data.name} has been created successfully.` });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setIsCreating(false);
@@ -267,7 +267,7 @@ const ProjectsContent = () => {
 
       toast.success("Project Deleted", { description: `${projectName} has been deleted successfully.` });
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setDeletingProjectId(null);

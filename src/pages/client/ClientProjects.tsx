@@ -61,7 +61,7 @@ const ClientProjects = () => {
 
       setProjects(mappedProjects);
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
