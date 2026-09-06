@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { FloatingParticles } from "@/components/ui/floating-particles";
 import { ShinyButton } from "@/components/ui/shiny-button";
+import { Divider } from "@/components/ui/divider";
 import marsBackground from "@/assets/mars-background.jpg";
 
 const Login = () => {
@@ -164,7 +165,8 @@ const Login = () => {
           </form>
 
           {/* Footer */}
-          <div className="mt-6 pt-5 border-t border-border">
+          <div className="mt-6">
+            <Divider label="Credential recovery" className="mb-4" />
             <button
               type="button"
               onClick={handleResetRequest}
