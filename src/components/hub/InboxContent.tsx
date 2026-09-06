@@ -168,6 +168,35 @@ const InboxContent = () => {
         </div>
       </div>
 
+      {/* Unread summary alert */}
+      {unreadCount > 0 && (
+        <Alert>
+          <div className="flex w-full items-start gap-3">
+            <Avatar className="w-10 h-10 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                {getInitials(activities.find((a) => !readIds.has(a.id))?.profiles?.full_name || "SY")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <AlertTitle>
+                {activities.find((a) => !readIds.has(a.id))?.profiles?.full_name || "System"} has new activity
+              </AlertTitle>
+              <AlertDescription>
+                {unreadCount} unread {unreadCount === 1 ? "item" : "items"} waiting for your review.
+              </AlertDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setReadIds(new Set(activities.map((a) => a.id)))}
+            >
+              Mark all read
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
