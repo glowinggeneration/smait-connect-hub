@@ -28,6 +28,8 @@ interface ItemProps extends React.HTMLAttributes<HTMLDivElement> {
   desc?: React.ReactNode;
   /** Optional icon/figure rendered to the right */
   figure?: React.ReactNode;
+  /** Small action buttons rendered below the value */
+  actions?: React.ReactNode;
   /** Semantic tone for the value */
   tone?: "default" | "stable" | "active" | "risk" | "blocked";
 }
