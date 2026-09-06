@@ -6,11 +6,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  FileImage, FileText, Upload, Search, 
+  FileImage, FileText, Search, 
   Download, Loader2, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface Asset {
   id: string;
@@ -73,6 +74,30 @@ const Assets = () => {
     fetchAssets();
   }, []);
 
+  const handleDownload = async (asset: Asset) => {
+    try {
+      let href = asset.url;
+      if (!/^https?:\/\//i.test(href)) {
+        const { data, error } = await supabase.storage
+          .from("brief-documents")
+          .createSignedUrl(href, 60);
+        if (error) throw error;
+        href = data.signedUrl;
+      }
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = asset.name;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Could not open this file";
+      toast.error(message);
+    }
+  };
+
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -93,10 +118,6 @@ const Assets = () => {
             </p>
           </div>
 
-          <Button variant="outline" size="sm" className="gap-2">
-            <Upload className="h-4 w-4" />
-            Upload
-          </Button>
         </div>
 
         <div className="relative max-w-sm">
@@ -147,10 +168,6 @@ const Assets = () => {
                 <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                   <FileText className="h-8 w-8 mb-3 opacity-50" />
                   <p className="text-sm">No assets found</p>
-                  <Button variant="outline" size="sm" className="mt-4 gap-2">
-                    <Upload className="h-4 w-4" />
-                    Upload asset
-                  </Button>
                 </div>
               </div>
             ) : (
@@ -188,6 +205,7 @@ const Assets = () => {
                             size="icon" 
                             variant="ghost" 
                             className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDownload(asset)}
                           >
                             <Download className="h-4 w-4" />
                           </Button>
