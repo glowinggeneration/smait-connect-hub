@@ -34,9 +34,14 @@ interface Activity {
   projects?: { name: string };
 }
 
+const PAGE_SIZE = 25;
+
 const InboxContent = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<Activity | null>(null);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
@@ -46,22 +51,29 @@ const InboxContent = () => {
     fetchActivities();
   }, []);
 
-  const fetchActivities = async () => {
+  const fetchActivities = async (pageIndex = 0) => {
     try {
+      if (pageIndex > 0) setLoadingMore(true);
+      const from = pageIndex * PAGE_SIZE;
       const { data, error } = await supabase
         .from("activities")
         .select("*, profiles!activities_user_id_fkey(full_name, email), projects(name)")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
 
       if (error) throw error;
-      setActivities(data || []);
-    } catch (error: any) {
+      setHasMore((data?.length || 0) === PAGE_SIZE);
+      setPage(pageIndex);
+      setActivities((prev) => (pageIndex === 0 ? data || [] : [...prev, ...(data || [])]));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Something went wrong";
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
+      setLoadingMore(false);
       setLoading(false);
     }
   };
