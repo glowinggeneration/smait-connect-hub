@@ -8,13 +8,14 @@ import { ShineBorder } from "@/components/ui/shine-border";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { Highlighter } from "@/components/ui/highlighter";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
+import { Stat } from "@/components/ui/stat";
 
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { useAgentRun } from "@/contexts/AgentRunContext";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowRight, Check, ChevronRight, Circle, 
-  Loader2, Minus
+  Loader2, Minus, Layers, ListTodo, AlarmClock, AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
