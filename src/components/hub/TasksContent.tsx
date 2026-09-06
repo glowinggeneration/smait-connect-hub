@@ -47,10 +47,15 @@ interface AdminUser {
   email: string;
 }
 
+const PAGE_SIZE = 25;
+
 const TasksContent = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -66,8 +71,9 @@ const TasksContent = () => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (pageIndex = 0) => {
     try {
+      if (pageIndex > 0) setLoadingMore(true);
       const { data: adminRoles } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -82,10 +88,12 @@ const TasksContent = () => {
         setAdminUsers(profiles || []);
       }
 
+      const from = pageIndex * PAGE_SIZE;
       const { data: tasksData, error } = await supabase
         .from("tasks")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
 
       if (error) throw error;
 
@@ -94,13 +102,18 @@ const TasksContent = () => {
         return { ...task, assigned_name: assignee?.full_name };
       });
 
-      setTasks(tasksWithNames);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setHasMore((tasksData?.length || 0) === PAGE_SIZE);
+      setPage(pageIndex);
+      setTasks((prev) => (pageIndex === 0 ? tasksWithNames : [...prev, ...tasksWithNames]));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Something went wrong";
+      toast({ title: "Error", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
+
 
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
