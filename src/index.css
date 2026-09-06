@@ -315,3 +315,9 @@
     user-select: none;
   }
 }
+
+@keyframes border-beam-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
