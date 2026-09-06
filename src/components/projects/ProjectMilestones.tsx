@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Timeline } from "@/components/ui/timeline";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
@@ -365,6 +366,39 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
         <CardContent>
           <Progress value={overallProgress} className="h-3" />
           <p className="text-sm text-muted-foreground mt-2">{overallProgress}% Complete</p>
+        </CardContent>
+      </Card>
+
+      {/* Phase timeline strip */}
+      <Card>
+        <CardContent className="py-6 overflow-x-auto">
+          <Timeline.Root horizontal className="min-w-max">
+            {milestones.map((milestone, index) => {
+              const tone =
+                milestone.status === "completed" ? "stable"
+                : milestone.status === "in_progress" ? "active"
+                : milestone.status === "blocked" ? "risk"
+                : "default";
+              const MarkerIcon =
+                milestone.status === "completed" ? CheckCircle2
+                : milestone.status === "in_progress" ? Clock
+                : milestone.status === "blocked" ? AlertCircle
+                : Circle;
+
+              return (
+                <Timeline.Item
+                  key={milestone.id}
+                  horizontal
+                  tone={tone}
+                  marker={<MarkerIcon />}
+                  start={milestone.due_date ? format(new Date(milestone.due_date), "dd MMM") : `Phase ${index + 1}`}
+                  last={index === milestones.length - 1}
+                >
+                  {milestone.title}
+                </Timeline.Item>
+              );
+            })}
+          </Timeline.Root>
         </CardContent>
       </Card>
 
