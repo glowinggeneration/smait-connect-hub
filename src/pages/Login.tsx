@@ -82,15 +82,6 @@ const Login = () => {
       {/* Floating particle field */}
       <FloatingParticles count={80} opacity={0.7} />
 
-      {/* Back navigation */}
-      <a 
-        href="https://smait.co.za/" 
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        <span className="text-xs font-medium tracking-wide uppercase">Exit</span>
-      </a>
-
       {/* Login Panel */}
       <div className="relative z-10 w-full max-w-sm mx-4">
         <div className="relative bg-card border border-border rounded-lg p-8 shadow-sm">
