@@ -148,20 +148,20 @@ const Login = () => {
               </div>
             </div>
 
-            <Button
+            <ShinyButton
               type="submit"
-              className="w-full h-10 bg-foreground hover:bg-foreground/90 text-background font-medium rounded-md text-sm mt-6"
+              className="mt-6"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Authenticating
                 </>
               ) : (
                 "Authenticate"
               )}
-            </Button>
+            </ShinyButton>
           </form>
 
           {/* Footer */}
