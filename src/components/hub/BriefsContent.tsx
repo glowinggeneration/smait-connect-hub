@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   Search, FileText, Loader2, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Download
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import {
   Collapsible,
@@ -85,8 +85,9 @@ const BriefsContent = () => {
           setDocuments(docsMap);
         }
       }
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -113,9 +114,10 @@ const BriefsContent = () => {
         });
       }
 
-      toast({ title: "Status Updated", description: `Brief has been ${newStatus}.` });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.success("Status Updated", { description: `Brief has been ${newStatus}.` });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -133,8 +135,9 @@ const BriefsContent = () => {
       a.download = doc.file_name;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 

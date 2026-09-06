@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Paperclip, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { getCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 interface Message {
@@ -43,7 +44,7 @@ const ClientMessages = () => {
   const initializeChat = async () => {
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
       setCurrentUserId(user.id);
 
@@ -109,12 +110,9 @@ const ClientMessages = () => {
           supabase.removeChannel(channel);
         };
       }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -176,12 +174,9 @@ const ClientMessages = () => {
         },
       ]);
       setNewMessage("");
-    } catch (error: any) {
-      toast({
-        title: "Error sending message",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error sending message", { description: errorMessage });
     } finally {
       setSending(false);
     }

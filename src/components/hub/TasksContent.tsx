@@ -24,8 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, ListTodo, Loader2, Trash2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { format } from "date-fns";
 
 interface Task {
@@ -46,10 +47,15 @@ interface AdminUser {
   email: string;
 }
 
+const PAGE_SIZE = 25;
+
 const TasksContent = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -65,8 +71,9 @@ const TasksContent = () => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (pageIndex = 0) => {
     try {
+      if (pageIndex > 0) setLoadingMore(true);
       const { data: adminRoles } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -81,10 +88,12 @@ const TasksContent = () => {
         setAdminUsers(profiles || []);
       }
 
+      const from = pageIndex * PAGE_SIZE;
       const { data: tasksData, error } = await supabase
         .from("tasks")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
 
       if (error) throw error;
 
@@ -93,13 +102,18 @@ const TasksContent = () => {
         return { ...task, assigned_name: assignee?.full_name };
       });
 
-      setTasks(tasksWithNames);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setHasMore((tasksData?.length || 0) === PAGE_SIZE);
+      setPage(pageIndex);
+      setTasks((prev) => (pageIndex === 0 ? tasksWithNames : [...prev, ...tasksWithNames]));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: message });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
+
 
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -114,13 +128,13 @@ const TasksContent = () => {
 
   const handleCreateTask = async () => {
     if (!newTask.title) {
-      toast({ title: "Missing Information", description: "Please enter a task title.", variant: "destructive" });
+      toast.error("Missing Information", { description: "Please enter a task title." });
       return;
     }
 
     setIsCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase.from("tasks").insert({
@@ -138,9 +152,10 @@ const TasksContent = () => {
       setNewTask({ title: "", description: "", priority: "medium", due_date: "", assigned_to: "" });
       setIsDialogOpen(false);
       fetchData();
-      toast({ title: "Task Created", description: "Task has been added successfully." });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.success("Task Created", { description: "Task has been added successfully." });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setIsCreating(false);
     }
@@ -156,8 +171,9 @@ const TasksContent = () => {
 
       if (error) throw error;
       setTasks(tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -166,9 +182,10 @@ const TasksContent = () => {
       const { error } = await supabase.from("tasks").delete().eq("id", taskId);
       if (error) throw error;
       setTasks(tasks.filter((t) => t.id !== taskId));
-      toast({ title: "Deleted", description: "Task has been deleted." });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.success("Deleted", { description: "Task has been deleted." });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -375,6 +392,13 @@ const TasksContent = () => {
                     </CardContent>
                   </Card>
                 ))}
+                {hasMore && !searchQuery && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="outline" size="sm" onClick={() => fetchData(page + 1)} disabled={loadingMore}>
+                      {loadingMore ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -121,7 +122,7 @@ export const ProjectOverview = ({
       if (error) throw error;
 
       // Log activity
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         await supabase.from("activities").insert({
           user_id: user.id,
@@ -138,8 +139,9 @@ export const ProjectOverview = ({
 
       toast.success("Project name updated");
       setIsEditingName(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update project name");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error(errorMessage || "Failed to update project name");
       setEditedName(project.name);
     } finally {
       setIsSavingName(false);

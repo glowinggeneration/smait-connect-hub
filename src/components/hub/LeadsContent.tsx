@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,8 @@ const stages = [
   { id: "closed_lost", label: "Closed Lost", color: "bg-red-500/20 text-red-400 border-red-500/30" },
 ];
 
+const LEADS_PAGE_SIZE = 25;
+
 const LeadsContent = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -109,18 +112,24 @@ const LeadsContent = () => {
     return () => { mounted = false; };
   }, [navigate]);
 
-  const { data: leads, isLoading: leadsLoading } = useQuery({
-    queryKey: ["leads"],
+  const [leadsPage, setLeadsPage] = useState(0);
+
+  const { data: leads, isLoading: leadsLoading, isFetching: leadsFetching } = useQuery({
+    queryKey: ["leads", leadsPage],
     enabled: isAuthed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, (leadsPage + 1) * LEADS_PAGE_SIZE - 1);
       if (error) throw error;
       return data as Lead[];
     },
   });
+
+  const hasMoreLeads = (leads?.length || 0) === (leadsPage + 1) * LEADS_PAGE_SIZE;
+
 
   const { data: assignees } = useQuery({
     queryKey: ["lead-assignees"],
@@ -159,7 +168,7 @@ const LeadsContent = () => {
 
   const createMutation = useMutation({
     mutationFn: async (leadData: typeof formData & { assignees: string[] }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data: lead, error } = await supabase
@@ -273,7 +282,7 @@ const LeadsContent = () => {
 
   const convertToProjectMutation = useMutation({
     mutationFn: async (lead: Lead) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       let clientId: string | null = null;
@@ -658,7 +667,21 @@ const LeadsContent = () => {
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+
+      {hasMoreLeads && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLeadsPage((p) => p + 1)}
+            disabled={leadsFetching}
+          >
+            {leadsFetching ? "Loading..." : "Load more leads"}
+          </Button>
+        </div>
+      )}
     </section>
+
   );
 };
 

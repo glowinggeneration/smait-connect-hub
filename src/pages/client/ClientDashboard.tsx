@@ -5,6 +5,7 @@ import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { formatDistanceToNow } from "date-fns";
 import { ClientDashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import {
@@ -43,7 +44,7 @@ const ClientDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchProjects = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return;
 
     const { data, error } = await supabase
@@ -58,7 +59,7 @@ const ClientDashboard = () => {
   }, []);
 
   const fetchActivities = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return;
 
     const { data, error } = await supabase

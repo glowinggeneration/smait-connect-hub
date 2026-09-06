@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { Video, Calendar, Link2, CheckCircle2, XCircle, Settings2, ExternalLink, Copy, Loader2 } from "lucide-react";
 
@@ -62,7 +63,7 @@ const IntegrationsContent = () => {
 
   const fetchIntegrations = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -72,7 +73,8 @@ const IntegrationsContent = () => {
 
       if (error) throw error;
       setIntegrations(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       console.error("Error fetching integrations:", error);
     } finally {
       setLoading(false);
@@ -102,8 +104,9 @@ const IntegrationsContent = () => {
 
       setIntegrations(integrations.filter((i) => i.provider !== provider));
       toast.success(`${PROVIDERS[provider as keyof typeof PROVIDERS].name} disconnected`);
-    } catch (error: any) {
-      toast.error("Failed to disconnect: " + error.message);
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Failed to disconnect: " + errorMessage);
     }
   };
 
@@ -112,7 +115,7 @@ const IntegrationsContent = () => {
     setConfiguring(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
@@ -132,8 +135,9 @@ const IntegrationsContent = () => {
       toast.success(`${PROVIDERS[selectedProvider as keyof typeof PROVIDERS].name} configured successfully`);
       setConfigDialogOpen(false);
       setOauthConfig({ clientId: "", clientSecret: "", redirectUri: window.location.origin + "/admin/integrations/callback" });
-    } catch (error: any) {
-      toast.error("Failed to configure: " + error.message);
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Failed to configure: " + errorMessage);
     } finally {
       setConfiguring(false);
     }

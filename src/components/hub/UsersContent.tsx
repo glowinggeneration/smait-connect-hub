@@ -46,7 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Search, MoreHorizontal, Trash2, Key, UserCog, Shield, Users, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
@@ -123,12 +123,9 @@ const UsersContent = () => {
       } else {
         setUsers([]);
       }
-    } catch (error: any) {
-      toast({
-        title: "Error fetching users",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error fetching users", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -152,11 +149,7 @@ const UsersContent = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        toast({
-          title: "Authentication Error",
-          description: "You must be logged in to create users.",
-          variant: "destructive",
-        });
+        toast.error("Authentication Error", { description: "You must be logged in to create users." });
         return;
       }
 
@@ -180,15 +173,13 @@ const UsersContent = () => {
         throw new Error(response.data.error);
       }
 
-      toast({
-        title: "User Created",
-        description: `${validatedData.full_name} has been added as ${validatedData.role}.`,
-      });
+      toast.success("User Created", { description: `${validatedData.full_name} has been added as ${validatedData.role}.` });
       
       setNewUser({ full_name: "", email: "", password: "", phone: "", company: "", role: "client" });
       setIsDialogOpen(false);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => {
@@ -198,11 +189,7 @@ const UsersContent = () => {
         });
         setErrors(fieldErrors);
       } else {
-        toast({
-          title: "Error Creating User",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast.error("Error Creating User", { description: errorMessage });
       }
     } finally {
       setIsCreating(false);
@@ -214,16 +201,10 @@ const UsersContent = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(user.email);
       if (error) throw error;
       
-      toast({
-        title: "Password Reset",
-        description: `A password reset link has been sent to ${user.email}.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.success("Password Reset", { description: `A password reset link has been sent to ${user.email}.` });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -235,11 +216,7 @@ const UsersContent = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        toast({
-          title: "Authentication Error",
-          description: "You must be logged in to delete users.",
-          variant: "destructive",
-        });
+        toast.error("Authentication Error", { description: "You must be logged in to delete users." });
         return;
       }
 
@@ -255,20 +232,14 @@ const UsersContent = () => {
         throw new Error(response.data.error);
       }
 
-      toast({
-        title: "User Deleted",
-        description: `${userToDelete.full_name} has been removed.`,
-      });
+      toast.success("User Deleted", { description: `${userToDelete.full_name} has been removed.` });
       
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       fetchUsers();
-    } catch (error: any) {
-      toast({
-        title: "Error Deleting User",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error Deleting User", { description: errorMessage });
     } finally {
       setIsDeleting(false);
     }

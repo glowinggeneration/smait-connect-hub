@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 
 interface SystemSignal {
   id: string;
@@ -53,7 +54,7 @@ export const IntelligenceProvider = ({ children }: { children: ReactNode }) => {
 
   const analyzeSystemState = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
       // Fetch all relevant data for analysis

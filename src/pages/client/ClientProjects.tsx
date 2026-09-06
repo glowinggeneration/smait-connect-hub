@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { FolderKanban, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { getCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 import { Project } from "@/components/projects/ProjectCard";
@@ -37,7 +38,7 @@ const ClientProjects = () => {
 
   const fetchProjects = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -59,12 +60,9 @@ const ClientProjects = () => {
       }));
 
       setProjects(mappedProjects);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }

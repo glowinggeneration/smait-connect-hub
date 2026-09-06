@@ -8,8 +8,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { User, Bell, Shield, Palette, Save, Camera, Loader2 } from "lucide-react";
 
 interface UserProfile {
@@ -51,7 +52,7 @@ const SettingsContent = () => {
 
   const fetchProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -69,12 +70,9 @@ const SettingsContent = () => {
         phone: data.phone || "",
         company: data.company || "",
       });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -97,16 +95,10 @@ const SettingsContent = () => {
       if (error) throw error;
 
       setProfile({ ...profile, ...formData });
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been saved successfully.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.success("Profile Updated", { description: "Your profile has been saved successfully." });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -117,20 +109,12 @@ const SettingsContent = () => {
     if (!file || !profile) return;
 
     if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload an image file.",
-        variant: "destructive",
-      });
+      toast.error("Invalid file type", { description: "Please upload an image file." });
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload an image smaller than 2MB.",
-        variant: "destructive",
-      });
+      toast.error("File too large", { description: "Please upload an image smaller than 2MB." });
       return;
     }
 
@@ -157,26 +141,17 @@ const SettingsContent = () => {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, avatar_url: publicUrl });
-      toast({
-        title: "Avatar Updated",
-        description: "Your avatar has been updated successfully.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error uploading avatar",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.success("Avatar Updated", { description: "Your avatar has been updated successfully." });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error uploading avatar", { description: errorMessage });
     } finally {
       setUploadingAvatar(false);
     }
   };
 
   const handleSaveNotifications = () => {
-    toast({
-      title: "Notifications Updated",
-      description: "Your notification preferences have been saved.",
-    });
+    toast.success("Notifications Updated", { description: "Your notification preferences have been saved." });
   };
 
   const getInitials = (name: string) => {
@@ -456,10 +431,7 @@ const SettingsContent = () => {
                 <Button
                   variant="gradient"
                   onClick={() =>
-                    toast({
-                      title: "Password Updated",
-                      description: "Your password has been changed successfully.",
-                    })
+                    toast.success("Password Updated", { description: "Your password has been changed successfully." })
                   }
                 >
                   Update Password

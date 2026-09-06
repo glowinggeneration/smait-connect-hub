@@ -37,7 +37,7 @@ import {
   Loader2,
   Phone
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import {
   DropdownMenu,
@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 
 interface Meeting {
   id: string;
@@ -105,12 +106,9 @@ const MeetingsContent = () => {
 
       if (clientsError) throw clientsError;
       setClients(clientsData || []);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -122,17 +120,13 @@ const MeetingsContent = () => {
 
   const handleCreateMeeting = async () => {
     if (!newMeeting.title || !newMeeting.date || !newMeeting.time || !newMeeting.client_id) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in title, date, time, and select a client.",
-        variant: "destructive",
-      });
+      toast.error("Missing Information", { description: "Please fill in title, date, time, and select a client." });
       return;
     }
 
     setIsCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
@@ -168,16 +162,10 @@ const MeetingsContent = () => {
         meeting_link: "",
       });
       setIsDialogOpen(false);
-      toast({
-        title: "Meeting Scheduled",
-        description: `${data.title} has been added to the calendar.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.success("Meeting Scheduled", { description: `${data.title} has been added to the calendar.` });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setIsCreating(false);
     }
@@ -193,16 +181,10 @@ const MeetingsContent = () => {
       if (error) throw error;
 
       setMeetings(meetings.filter((m) => m.id !== id));
-      toast({
-        title: "Meeting Deleted",
-        description: "The meeting has been removed.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.success("Meeting Deleted", { description: "The meeting has been removed." });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 

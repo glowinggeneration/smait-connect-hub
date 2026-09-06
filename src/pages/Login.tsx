@@ -27,8 +27,9 @@ const Login = () => {
       });
       if (error) throw error;
       toast.success("Reset link sent. Check your email.");
-    } catch (error: any) {
-      toast.error(error.message || "Could not send reset link");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error(errorMessage || "Could not send reset link");
     } finally {
       setIsResetting(false);
     }
@@ -58,8 +59,9 @@ const Login = () => {
       } else {
         navigate("/client");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error(errorMessage || "Authentication failed");
     } finally {
       setIsLoading(false);
     }

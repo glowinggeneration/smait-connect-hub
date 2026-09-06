@@ -11,7 +11,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { getCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   CheckCircle2,
@@ -124,8 +125,9 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
       if (error) throw error;
       setMilestones(data || []);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -154,7 +156,8 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       }));
 
       setComments(commentsWithNames);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       console.error("Error fetching comments:", error);
     }
   };
@@ -169,7 +172,8 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
       if (error) throw error;
       setAttachments(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       console.error("Error fetching attachments:", error);
     }
   };
@@ -190,10 +194,11 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
       if (error) throw error;
 
-      toast({ title: "Status Updated", description: `Milestone marked as ${newStatus}` });
+      toast.success("Status Updated", { description: `Milestone marked as ${newStatus}` });
       fetchMilestones();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -202,7 +207,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
     setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
@@ -217,9 +222,10 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
       setNewComment("");
       fetchComments(selectedMilestone.id);
-      toast({ title: "Comment added" });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.success("Comment added");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -230,7 +236,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
     setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
@@ -248,9 +254,10 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       setNewLink({ url: "", title: "" });
       setLinkDialogOpen(false);
       fetchAttachments(selectedMilestone.id);
-      toast({ title: "Link added" });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.success("Link added");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -262,7 +269,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
     setUploadingImage(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const fileExt = file.name.split('.').pop();
@@ -291,9 +298,10 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       if (error) throw error;
 
       fetchAttachments(selectedMilestone.id);
-      toast({ title: "Image uploaded" });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.success("Image uploaded");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setUploadingImage(false);
     }
@@ -316,9 +324,10 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       }
 
       fetchAttachments(selectedMilestone!.id);
-      toast({ title: "Attachment removed" });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.success("Attachment removed");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
