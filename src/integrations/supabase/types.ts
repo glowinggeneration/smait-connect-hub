@@ -583,6 +583,50 @@ export type Database = {
         }
         Relationships: []
       }
+      project_files: {
+        Row: {
+          collection: string
+          created_at: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          name: string
+          project_id: string | null
+          size_bytes: number | null
+          uploaded_by: string
+        }
+        Insert: {
+          collection: string
+          created_at?: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          name: string
+          project_id?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string
+        }
+        Update: {
+          collection?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          name?: string
+          project_id?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_milestones: {
         Row: {
           completed_at: string | null
