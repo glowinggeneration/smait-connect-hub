@@ -389,6 +389,13 @@ const TasksContent = () => {
                     </CardContent>
                   </Card>
                 ))}
+                {hasMore && !searchQuery && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="outline" size="sm" onClick={() => fetchData(page + 1)} disabled={loadingMore}>
+                      {loadingMore ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12">
