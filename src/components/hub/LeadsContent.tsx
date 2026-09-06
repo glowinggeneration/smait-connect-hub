@@ -667,7 +667,21 @@ const LeadsContent = () => {
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+
+      {hasMoreLeads && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLeadsPage((p) => p + 1)}
+            disabled={leadsFetching}
+          >
+            {leadsFetching ? "Loading..." : "Load more leads"}
+          </Button>
+        </div>
+      )}
     </section>
+
   );
 };
 
