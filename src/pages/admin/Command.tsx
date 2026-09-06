@@ -125,40 +125,34 @@ const Command = () => {
             )}
           </div>
           
-          <div className="panel">
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-              <div className="p-4">
-                <p className="text-2xl font-semibold">
-                  <NumberTicker value={metrics.activeInitiatives} />
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Active Initiatives</p>
-              </div>
-              <div className="p-4">
-                <p className="text-2xl font-semibold">
-                  <NumberTicker value={metrics.pendingAssignments} delay={80} />
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Open Assignments</p>
-              </div>
-              <div className="p-4">
-                <p className={cn(
-                  "text-2xl font-semibold",
-                  metrics.overdueItems > 0 && "state-risk"
-                )}>
-                  <NumberTicker value={metrics.overdueItems} delay={160} />
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Overdue</p>
-              </div>
-              <div className="p-4">
-                <p className={cn(
-                  "text-2xl font-semibold",
-                  metrics.atRiskInitiatives > 0 && "state-risk"
-                )}>
-                  <NumberTicker value={metrics.atRiskInitiatives} delay={240} />
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">At Risk</p>
-              </div>
-            </div>
-          </div>
+          <Stat.Group>
+            <Stat.Item
+              title="Active Initiatives"
+              figure={<Layers className="h-4 w-4" />}
+            >
+              <NumberTicker value={metrics.activeInitiatives} />
+            </Stat.Item>
+            <Stat.Item
+              title="Open Assignments"
+              figure={<ListTodo className="h-4 w-4" />}
+            >
+              <NumberTicker value={metrics.pendingAssignments} delay={80} />
+            </Stat.Item>
+            <Stat.Item
+              title="Overdue"
+              tone={metrics.overdueItems > 0 ? "risk" : "default"}
+              figure={<AlarmClock className="h-4 w-4" />}
+            >
+              <NumberTicker value={metrics.overdueItems} delay={160} />
+            </Stat.Item>
+            <Stat.Item
+              title="At Risk"
+              tone={metrics.atRiskInitiatives > 0 ? "risk" : "default"}
+              figure={<AlertTriangle className="h-4 w-4" />}
+            >
+              <NumberTicker value={metrics.atRiskInitiatives} delay={240} />
+            </Stat.Item>
+          </Stat.Group>
         </section>
 
 
