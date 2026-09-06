@@ -28,6 +28,8 @@ interface ItemProps extends React.HTMLAttributes<HTMLDivElement> {
   desc?: React.ReactNode;
   /** Optional icon/figure rendered to the right */
   figure?: React.ReactNode;
+  /** Small action buttons rendered below the value */
+  actions?: React.ReactNode;
   /** Semantic tone for the value */
   tone?: "default" | "stable" | "active" | "risk" | "blocked";
 }
@@ -40,7 +42,7 @@ const toneClass: Record<NonNullable<ItemProps["tone"]>, string> = {
   blocked: "state-blocked",
 };
 
-function Item({ title, desc, figure, tone = "default", className, children, ...props }: ItemProps) {
+function Item({ title, desc, figure, actions, tone = "default", className, children, ...props }: ItemProps) {
   return (
     <div className={cn("p-4 flex items-start justify-between gap-3", className)} {...props}>
       <div className="min-w-0">
@@ -49,6 +51,9 @@ function Item({ title, desc, figure, tone = "default", className, children, ...p
           {children}
         </p>
         {desc && <p className="text-[11px] text-muted-foreground mt-1">{desc}</p>}
+        {actions && (
+          <div className="flex items-center gap-1.5 mt-2">{actions}</div>
+        )}
       </div>
       {figure && (
         <div className="shrink-0 text-muted-foreground/60">{figure}</div>

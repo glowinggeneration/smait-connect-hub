@@ -130,6 +130,14 @@ const Command = () => {
             <Stat.Item
               title="Active Initiatives"
               figure={<Layers className="h-4 w-4" />}
+              actions={
+                <button
+                  onClick={() => navigate("/work")}
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-0.5"
+                >
+                  View <ArrowRight className="h-3 w-3" />
+                </button>
+              }
             >
               <NumberTicker value={metrics.activeInitiatives} />
             </Stat.Item>
@@ -143,6 +151,14 @@ const Command = () => {
               title="Overdue"
               tone={metrics.overdueItems > 0 ? "risk" : "default"}
               figure={<AlarmClock className="h-4 w-4" />}
+              actions={metrics.overdueItems > 0 ? (
+                <button
+                  onClick={() => navigate("/work")}
+                  className="text-[11px] text-state-risk hover:underline inline-flex items-center gap-0.5"
+                >
+                  Review <ArrowRight className="h-3 w-3" />
+                </button>
+              ) : undefined}
             >
               <NumberTicker value={metrics.overdueItems} delay={160} />
             </Stat.Item>
