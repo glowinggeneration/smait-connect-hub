@@ -206,7 +206,10 @@ const InboxContent = () => {
             </div>
             <div>
               <p className="text-2xl font-bold">{unreadCount}</p>
-              <p className="text-xs text-muted-foreground">Unread</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">Unread</p>
+                {unreadCount > 0 && <DotBadge pulse tone="active" className="text-[10px] px-1.5 py-0">Live</DotBadge>}
+              </div>
             </div>
           </CardContent>
         </Card>
