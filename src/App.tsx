@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ActiveRunBanner } from "@/components/agents/ActiveRunBanner";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 
 // New consolidated pages
 import Command from "./pages/admin/Command";
@@ -47,6 +48,8 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
         
         {/* Consolidated Admin Routes */}
         <Route path="/command" element={<ProtectedRoute><Command /></ProtectedRoute>} />

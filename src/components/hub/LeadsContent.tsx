@@ -276,10 +276,63 @@ const LeadsContent = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      let clientId: string | null = null;
+
+      // Try to find an existing client profile matching the lead's contact details
+      if (lead.email) {
+        const { data: existing } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .eq("email", lead.email)
+          .maybeSingle();
+        clientId = existing?.user_id ?? null;
+      }
+
+      // No client record yet — create one from the lead's contact details
+      if (!clientId) {
+        if (!lead.email) {
+          throw new Error("Add an email address to this lead before converting it.");
+        }
+
+        const tempPassword = `${crypto.randomUUID().slice(0, 12)}Aa1!`;
+        const { data: created, error: createError } = await supabase.functions.invoke(
+          "create-client",
+          {
+            body: {
+              email: lead.email,
+              password: tempPassword,
+              full_name: lead.contact_name,
+              company: lead.company || null,
+              phone: lead.phone || null,
+            },
+          }
+        );
+
+        if (createError) throw createError;
+        if ((created as any)?.error) throw new Error((created as any).error);
+
+        clientId =
+          (created as any)?.user?.id ??
+          (created as any)?.user_id ??
+          (created as any)?.id ??
+          null;
+
+        if (!clientId) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("user_id")
+            .eq("email", lead.email)
+            .maybeSingle();
+          clientId = profile?.user_id ?? null;
+        }
+
+        if (!clientId) throw new Error("Could not create a client record for this lead.");
+      }
+
       const { error } = await supabase.from("projects").insert({
         name: lead.project_description || `Project for ${lead.contact_name}`,
         description: `Converted from lead: ${lead.contact_name}${lead.company ? ` (${lead.company})` : ""}`,
-        client_id: user.id,
+        client_id: clientId,
         status: "in-progress",
       });
 
@@ -287,6 +340,7 @@ const LeadsContent = () => {
 
       await supabase.from("leads").delete().eq("id", lead.id);
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
