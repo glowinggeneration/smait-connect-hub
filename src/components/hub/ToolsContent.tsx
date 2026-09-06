@@ -183,17 +183,10 @@ const ToolsContent = () => {
 
   const renderStars = (rating: number, interactive = false, onChange?: (r: number) => void) => {
     return (
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"
-            } ${interactive ? "cursor-pointer hover:text-yellow-500" : ""}`}
-            onClick={() => interactive && onChange?.(star)}
-          />
-        ))}
-      </div>
+      <StarRating
+        value={rating}
+        onChange={interactive ? onChange : undefined}
+      />
     );
   };
 
