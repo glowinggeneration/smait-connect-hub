@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BorderBeam } from "@/components/ui/border-beam";
@@ -81,15 +81,6 @@ const Login = () => {
 
       {/* Floating particle field */}
       <FloatingParticles count={80} opacity={0.7} />
-
-      {/* Back navigation */}
-      <a 
-        href="https://smait.co.za/" 
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        <span className="text-xs font-medium tracking-wide uppercase">Exit</span>
-      </a>
 
       {/* Login Panel */}
       <div className="relative z-10 w-full max-w-sm mx-4">
