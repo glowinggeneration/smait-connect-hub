@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Search, MoreHorizontal, Mail, Phone, Building, Key, Eye, Users, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
@@ -95,7 +95,7 @@ const ClientsContent = () => {
         setClients([]);
       }
     } catch (error: any) {
-      toast({ title: "Error fetching clients", description: error.message, variant: "destructive" });
+      toast.error("Error fetching clients", { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -117,7 +117,7 @@ const ClientsContent = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast({ title: "Authentication Error", description: "You must be logged in to create clients.", variant: "destructive" });
+        toast.error("Authentication Error", { description: "You must be logged in to create clients." });
         return;
       }
 
@@ -126,7 +126,7 @@ const ClientsContent = () => {
       if (response.error) throw new Error(response.error.message || 'Failed to create client');
       if (response.data?.error) throw new Error(response.data.error);
 
-      toast({ title: "Client Created", description: `${validatedData.full_name} has been added successfully.` });
+      toast.success("Client Created", { description: `${validatedData.full_name} has been added successfully.` });
       setNewClient({ full_name: "", email: "", password: "", phone: "", company: "" });
       setIsDialogOpen(false);
       fetchClients();
@@ -138,7 +138,7 @@ const ClientsContent = () => {
         });
         setErrors(fieldErrors);
       } else {
-        toast({ title: "Error Creating Client", description: error.message, variant: "destructive" });
+        toast.error("Error Creating Client", { description: error.message });
       }
     } finally {
       setIsCreating(false);
@@ -149,9 +149,9 @@ const ClientsContent = () => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(client.email);
       if (error) throw error;
-      toast({ title: "Password Reset", description: `A password reset link has been sent to ${client.email}.` });
+      toast.success("Password Reset", { description: `A password reset link has been sent to ${client.email}.` });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     }
   };
 

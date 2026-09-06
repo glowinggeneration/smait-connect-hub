@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   Search, FileText, Loader2, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Download
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import {
   Collapsible,
@@ -86,7 +86,7 @@ const BriefsContent = () => {
         }
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -113,9 +113,9 @@ const BriefsContent = () => {
         });
       }
 
-      toast({ title: "Status Updated", description: `Brief has been ${newStatus}.` });
+      toast.success("Status Updated", { description: `Brief has been ${newStatus}.` });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     }
   };
 
@@ -134,7 +134,7 @@ const BriefsContent = () => {
       a.click();
       URL.revokeObjectURL(url);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     }
   };
 

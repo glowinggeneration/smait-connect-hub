@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   CheckCircle2,
@@ -126,7 +126,7 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       if (error) throw error;
       setMilestones(data || []);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -191,10 +191,10 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
       if (error) throw error;
 
-      toast({ title: "Status Updated", description: `Milestone marked as ${newStatus}` });
+      toast.success("Status Updated", { description: `Milestone marked as ${newStatus}` });
       fetchMilestones();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     }
   };
 
@@ -218,9 +218,9 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
 
       setNewComment("");
       fetchComments(selectedMilestone.id);
-      toast({ title: "Comment added" });
+      toast.success("Comment added");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     } finally {
       setSubmitting(false);
     }
@@ -249,9 +249,9 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       setNewLink({ url: "", title: "" });
       setLinkDialogOpen(false);
       fetchAttachments(selectedMilestone.id);
-      toast({ title: "Link added" });
+      toast.success("Link added");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     } finally {
       setSubmitting(false);
     }
@@ -292,9 +292,9 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       if (error) throw error;
 
       fetchAttachments(selectedMilestone.id);
-      toast({ title: "Image uploaded" });
+      toast.success("Image uploaded");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     } finally {
       setUploadingImage(false);
     }
@@ -317,9 +317,9 @@ export const ProjectMilestones = ({ projectId, isAdmin }: ProjectMilestonesProps
       }
 
       fetchAttachments(selectedMilestone!.id);
-      toast({ title: "Attachment removed" });
+      toast.success("Attachment removed");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     }
   };
 

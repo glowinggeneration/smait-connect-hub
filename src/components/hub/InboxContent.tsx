@@ -20,7 +20,7 @@ import {
   FileUp,
   Loader2
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 interface Activity {
@@ -67,11 +67,7 @@ const InboxContent = () => {
       setActivities((prev) => (pageIndex === 0 ? data || [] : [...prev, ...(data || [])]));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: message });
     } finally {
       setLoadingMore(false);
       setLoading(false);
@@ -112,16 +108,9 @@ const InboxContent = () => {
       
       setActivities(activities.filter((a) => a.id !== id));
       setSelectedItem(null);
-      toast({
-        title: "Deleted",
-        description: "Activity has been deleted.",
-      });
+      toast.success("Deleted", { description: "Activity has been deleted." });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     }
   };
 

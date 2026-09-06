@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { ProjectProgressSlider } from "@/components/projects/ProjectProgressSlider";
 import { Plus, Search, FolderKanban, Loader2, Calendar, Trash2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
 import { formatDistanceToNow, differenceInDays, parseISO } from "date-fns";
@@ -142,11 +142,7 @@ const ProjectsContent = () => {
       setProjects((prev) => (pageIndex === 0 ? projectsData || [] : [...prev, ...(projectsData || [])]));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: message });
     } finally {
       setLoadingMore(false);
       setLoading(false);
@@ -194,16 +190,9 @@ const ProjectsContent = () => {
         });
       }
 
-      toast({
-        title: "Progress Updated",
-        description: `Project is now ${progress}% complete`,
-      });
+      toast.success("Progress Updated", { description: `Project is now ${progress}% complete` });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     }
   };
 
@@ -215,11 +204,7 @@ const ProjectsContent = () => {
 
   const handleCreateProject = async () => {
     if (!newProject.name || !newProject.client_id) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in project name and select a client.",
-        variant: "destructive",
-      });
+      toast.error("Missing Information", { description: "Please fill in project name and select a client." });
       return;
     }
 
@@ -259,16 +244,9 @@ const ProjectsContent = () => {
 
       setNewProject({ name: "", description: "", client_id: "", due_date: "" });
       setIsDialogOpen(false);
-      toast({
-        title: "Project Created",
-        description: `${data.name} has been created successfully.`,
-      });
+      toast.success("Project Created", { description: `${data.name} has been created successfully.` });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setIsCreating(false);
     }
@@ -285,16 +263,9 @@ const ProjectsContent = () => {
       const { error } = await supabase.from("projects").delete().eq("id", projectId);
       if (error) throw error;
 
-      toast({
-        title: "Project Deleted",
-        description: `${projectName} has been deleted successfully.`,
-      });
+      toast.success("Project Deleted", { description: `${projectName} has been deleted successfully.` });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setDeletingProjectId(null);
     }

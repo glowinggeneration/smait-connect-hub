@@ -5,7 +5,7 @@ import { ProjectMilestones } from "@/components/projects/ProjectMilestones";
 import { Project, defaultPhases } from "@/types/project";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2, LayoutDashboard, Milestone } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -85,11 +85,7 @@ const ClientProjectDetail = () => {
 
       await updateProjectFromPayload(projectData);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setLoading(false);
     }

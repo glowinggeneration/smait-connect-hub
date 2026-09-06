@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Paperclip, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 interface Message {
@@ -111,11 +111,7 @@ const ClientMessages = () => {
         };
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -178,11 +174,7 @@ const ClientMessages = () => {
       ]);
       setNewMessage("");
     } catch (error: any) {
-      toast({
-        title: "Error sending message",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error sending message", { description: error.message });
     } finally {
       setSending(false);
     }

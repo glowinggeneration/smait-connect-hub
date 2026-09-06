@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { FolderKanban, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 import { Project } from "@/components/projects/ProjectCard";
@@ -61,11 +61,7 @@ const ClientProjects = () => {
 
       setProjects(mappedProjects);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setLoading(false);
     }

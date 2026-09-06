@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, ListTodo, Loader2, Trash2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
 import { format } from "date-fns";
@@ -107,7 +107,7 @@ const TasksContent = () => {
       setTasks((prev) => (pageIndex === 0 ? tasksWithNames : [...prev, ...tasksWithNames]));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";
-      toast({ title: "Error", description: message, variant: "destructive" });
+      toast.error("Error", { description: message });
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -128,7 +128,7 @@ const TasksContent = () => {
 
   const handleCreateTask = async () => {
     if (!newTask.title) {
-      toast({ title: "Missing Information", description: "Please enter a task title.", variant: "destructive" });
+      toast.error("Missing Information", { description: "Please enter a task title." });
       return;
     }
 
@@ -152,9 +152,9 @@ const TasksContent = () => {
       setNewTask({ title: "", description: "", priority: "medium", due_date: "", assigned_to: "" });
       setIsDialogOpen(false);
       fetchData();
-      toast({ title: "Task Created", description: "Task has been added successfully." });
+      toast.success("Task Created", { description: "Task has been added successfully." });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     } finally {
       setIsCreating(false);
     }
@@ -171,7 +171,7 @@ const TasksContent = () => {
       if (error) throw error;
       setTasks(tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     }
   };
 
@@ -180,9 +180,9 @@ const TasksContent = () => {
       const { error } = await supabase.from("tasks").delete().eq("id", taskId);
       if (error) throw error;
       setTasks(tasks.filter((t) => t.id !== taskId));
-      toast({ title: "Deleted", description: "Task has been deleted." });
+      toast.success("Deleted", { description: "Task has been deleted." });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error", { description: error.message });
     }
   };
 

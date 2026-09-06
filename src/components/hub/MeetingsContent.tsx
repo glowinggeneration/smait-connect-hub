@@ -37,7 +37,7 @@ import {
   Loader2,
   Phone
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import {
   DropdownMenu,
@@ -107,11 +107,7 @@ const MeetingsContent = () => {
       if (clientsError) throw clientsError;
       setClients(clientsData || []);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -123,11 +119,7 @@ const MeetingsContent = () => {
 
   const handleCreateMeeting = async () => {
     if (!newMeeting.title || !newMeeting.date || !newMeeting.time || !newMeeting.client_id) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in title, date, time, and select a client.",
-        variant: "destructive",
-      });
+      toast.error("Missing Information", { description: "Please fill in title, date, time, and select a client." });
       return;
     }
 
@@ -169,16 +161,9 @@ const MeetingsContent = () => {
         meeting_link: "",
       });
       setIsDialogOpen(false);
-      toast({
-        title: "Meeting Scheduled",
-        description: `${data.title} has been added to the calendar.`,
-      });
+      toast.success("Meeting Scheduled", { description: `${data.title} has been added to the calendar.` });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setIsCreating(false);
     }
@@ -194,16 +179,9 @@ const MeetingsContent = () => {
       if (error) throw error;
 
       setMeetings(meetings.filter((m) => m.id !== id));
-      toast({
-        title: "Meeting Deleted",
-        description: "The meeting has been removed.",
-      });
+      toast.success("Meeting Deleted", { description: "The meeting has been removed." });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     }
   };
 

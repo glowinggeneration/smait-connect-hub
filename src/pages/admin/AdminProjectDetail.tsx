@@ -7,7 +7,7 @@ import { mockProject, Project, defaultPhases } from "@/types/project";
 import { useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, Layers, FileText, MessageSquare, Loader2, Milestone } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -69,11 +69,7 @@ const AdminProjectDetail = () => {
 
       setProject(projectWithPhases);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error", { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -129,38 +125,22 @@ const AdminProjectDetail = () => {
         });
       }
 
-      toast({
-        title: "Project Updated",
-        description: `Progress saved: ${overallProgress}%`,
-      });
+      toast.success("Project Updated", { description: `Progress saved: ${overallProgress}%` });
     } catch (error: any) {
-      toast({
-        title: "Error saving changes",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Error saving changes", { description: error.message });
     }
   };
 
   const handleUploadBrief = () => {
-    toast({
-      title: "Upload Brief",
-      description: "Brief upload functionality coming soon.",
-    });
+    toast.success("Upload Brief", { description: "Brief upload functionality coming soon." });
   };
 
   const handleOpenChat = () => {
-    toast({
-      title: "Project Chat",
-      description: "Chat functionality coming soon.",
-    });
+    toast.success("Project Chat", { description: "Chat functionality coming soon." });
   };
 
   const handleViewDeliverables = () => {
-    toast({
-      title: "Deliverables",
-      description: "Deliverables view coming soon.",
-    });
+    toast.success("Deliverables", { description: "Deliverables view coming soon." });
   };
 
   if (loading) {

@@ -16,7 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Calendar, CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 interface StandupEntry {
@@ -64,11 +64,7 @@ const StandupsContent = () => {
 
   const handleCreateStandup = () => {
     if (!newStandup.yesterday || !newStandup.today) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in what you did yesterday and your plans for today.",
-        variant: "destructive",
-      });
+      toast.error("Missing Information", { description: "Please fill in what you did yesterday and your plans for today." });
       return;
     }
 
@@ -85,10 +81,7 @@ const StandupsContent = () => {
     setStandups([standup, ...standups]);
     setNewStandup({ yesterday: "", today: "", blockers: "" });
     setIsDialogOpen(false);
-    toast({
-      title: "Standup Submitted",
-      description: "Your daily standup has been recorded.",
-    });
+    toast.success("Standup Submitted", { description: "Your daily standup has been recorded." });
   };
 
   const formatDate = (dateStr: string) => {
