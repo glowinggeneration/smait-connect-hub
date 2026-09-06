@@ -321,3 +321,14 @@
     transform: rotate(360deg);
   }
 }
+
+/* Shiny button light sweep — slow, single pass, institution-grade restraint */
+@keyframes shine-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  40%,
+  100% {
+    transform: translateX(100%);
+  }
+}
