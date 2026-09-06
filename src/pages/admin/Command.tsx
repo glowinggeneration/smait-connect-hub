@@ -9,6 +9,8 @@ import { NumberTicker } from "@/components/ui/number-ticker";
 import { Highlighter } from "@/components/ui/highlighter";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 import { Stat } from "@/components/ui/stat";
+import { RadialProgress } from "@/components/ui/radial-progress";
+import { IndicatorBadge } from "@/components/ui/indicator-badge";
 
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { useAgentRun } from "@/contexts/AgentRunContext";
@@ -275,6 +277,21 @@ const Command = () => {
                         onClick={() => navigate(`/admin/project/${initiative.id}`)}
                         className="ledger-row cursor-pointer"
                       >
+                        <RadialProgress
+                          value={initiative.progress ?? 0}
+                          size={30}
+                          strokeWidth={3}
+                          showLabel
+                          tone={
+                            initiative.progress >= 100
+                              ? "stable"
+                              : initiative.status === "at_risk"
+                                ? "risk"
+                                : "active"
+                          }
+                          label={`${initiative.name} progress`}
+                          className="mr-1"
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
                             {initiative.name}
@@ -325,6 +342,9 @@ const Command = () => {
                     : brief.status === "rejected" 
                       ? "state-risk" 
                       : "state-active";
+                  const isNew =
+                    Date.now() - new Date(brief.created_at).getTime() <
+                    7 * 24 * 60 * 60 * 1000;
                   return (
                     <div
                       key={brief.id}
@@ -332,9 +352,14 @@ const Command = () => {
                       onClick={() => navigate("/work?tab=briefs")}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {brief.title}
-                        </p>
+                        <IndicatorBadge
+                          badge={isNew ? "New" : null}
+                          tone="active"
+                        >
+                          <p className="text-sm font-medium truncate pr-2">
+                            {brief.title}
+                          </p>
+                        </IndicatorBadge>
                         <p className="text-xs text-muted-foreground truncate">
                           {brief.category} · {format(new Date(brief.created_at), "MMM d, yyyy")}
                         </p>

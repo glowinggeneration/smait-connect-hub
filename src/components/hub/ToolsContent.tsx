@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, Plus, Star, Trash2, Wrench, ExternalLink, Loader2 } from "lucide-react";
+import { Edit, Plus, Trash2, Wrench, ExternalLink, Loader2 } from "lucide-react";
+import { StarRating } from "@/components/ui/star-rating";
 
 interface Tool {
   id: string;
@@ -183,17 +184,10 @@ const ToolsContent = () => {
 
   const renderStars = (rating: number, interactive = false, onChange?: (r: number) => void) => {
     return (
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"
-            } ${interactive ? "cursor-pointer hover:text-yellow-500" : ""}`}
-            onClick={() => interactive && onChange?.(star)}
-          />
-        ))}
-      </div>
+      <StarRating
+        value={rating}
+        onChange={interactive ? onChange : undefined}
+      />
     );
   };
 
