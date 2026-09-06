@@ -96,13 +96,19 @@ export default {
           from: { opacity: "0", transform: "translateY(4px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "shiny-text": {
+          "0%, 90%, 100%": { "background-position": "calc(-100% - var(--shiny-width)) 0" },
+          "30%, 60%": { "background-position": "calc(100% + var(--shiny-width)) 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.4s ease-out forwards",
         "slide-up": "slide-up 0.5s ease-out forwards",
+        "shiny-text": "shiny-text 6s infinite",
       },
+
       spacing: {
         "18": "4.5rem",
         "22": "5.5rem",
