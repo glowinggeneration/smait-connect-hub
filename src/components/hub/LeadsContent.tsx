@@ -110,18 +110,22 @@ const LeadsContent = () => {
     return () => { mounted = false; };
   }, [navigate]);
 
-  const { data: leads, isLoading: leadsLoading } = useQuery({
-    queryKey: ["leads"],
+  const { data: leads, isLoading: leadsLoading, isFetching: leadsFetching } = useQuery({
+    queryKey: ["leads", leadsPage],
     enabled: isAuthed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, (leadsPage + 1) * LEADS_PAGE_SIZE - 1);
       if (error) throw error;
       return data as Lead[];
     },
   });
+
+  const hasMoreLeads = (leads?.length || 0) === (leadsPage + 1) * LEADS_PAGE_SIZE;
+
 
   const { data: assignees } = useQuery({
     queryKey: ["lead-assignees"],
