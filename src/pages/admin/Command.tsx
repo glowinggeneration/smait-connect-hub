@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShineBorder } from "@/components/ui/shine-border";
 import { NumberTicker } from "@/components/ui/number-ticker";
+import { Highlighter } from "@/components/ui/highlighter";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 
 import { useIntelligence } from "@/contexts/IntelligenceContext";
@@ -179,7 +180,9 @@ const Command = () => {
                 <div className="flex items-center justify-center py-12 text-muted-foreground">
                   <div className="text-center">
                     <Check className="h-5 w-5 mx-auto mb-2 state-stable" />
-                    <p className="text-sm">No decisions pending</p>
+                    <p className="text-sm">
+                      <Highlighter action="underline" tone="stable">No decisions pending</Highlighter>
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -198,7 +201,13 @@ const Command = () => {
                                 ? "fill-state-risk text-state-risk" 
                                 : "fill-state-active text-state-active"
                             )} />
-                            <span className="text-sm font-medium truncate">{signal.title}</span>
+                            <span className="text-sm font-medium truncate">
+                              {signal.type === "risk" || signal.type === "escalation" ? (
+                                <Highlighter tone="risk" duration={600}>{signal.title}</Highlighter>
+                              ) : (
+                                signal.title
+                              )}
+                            </span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5 ml-4 line-clamp-1">
                             {signal.description}
