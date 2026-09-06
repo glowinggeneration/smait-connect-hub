@@ -234,7 +234,73 @@ const Assets = () => {
             </p>
           </div>
 
+          <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-2">
+                <Upload className="h-4 w-4" />
+                Upload files
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Upload project files</DialogTitle>
+                <DialogDescription>
+                  Files appear inside the folder you choose.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="asset-project">Initiative</Label>
+                  <select
+                    id="asset-project"
+                    value={uploadProjectId}
+                    onChange={(e) => setUploadProjectId(e.target.value)}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">None — use a folder name</option>
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="asset-collection">Folder name</Label>
+                  <Input
+                    id="asset-collection"
+                    placeholder={projects.find(p => p.id === uploadProjectId)?.name || "e.g. Brand Assets"}
+                    value={uploadCollection}
+                    onChange={(e) => setUploadCollection(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="asset-files">Files</Label>
+                  <Input
+                    id="asset-files"
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={(e) => setPendingFiles(Array.from(e.target.files || []))}
+                  />
+                  {pendingFiles.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {pendingFiles.length} file{pendingFiles.length === 1 ? "" : "s"} ready
+                    </p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setUploadOpen(false)} disabled={uploading}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpload} disabled={uploading}>
+                  {uploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Upload
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
+
 
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
