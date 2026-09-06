@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ShineBorder } from "@/components/ui/shine-border";
 import { useIntelligence } from "@/contexts/IntelligenceContext";
 import { useAgentRun } from "@/contexts/AgentRunContext";
 import { supabase } from "@/integrations/supabase/client";
