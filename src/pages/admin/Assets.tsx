@@ -430,6 +430,17 @@ const Assets = () => {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
+                          {asset.uploaded && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                              onClick={() => handleDelete(asset)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+
                         </div>
                       </div>
                     ))}
