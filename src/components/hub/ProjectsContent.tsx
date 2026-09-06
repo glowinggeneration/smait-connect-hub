@@ -59,11 +59,16 @@ interface Client {
   company: string | null;
 }
 
+const PAGE_SIZE = 25;
+
 const ProjectsContent = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -106,12 +111,15 @@ const ProjectsContent = () => {
     };
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (pageIndex = 0) => {
     try {
+      if (pageIndex > 0) setLoadingMore(true);
+      const from = pageIndex * PAGE_SIZE;
       const { data: projectsData, error: projectsError } = await supabase
         .from("projects")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
 
       if (projectsError) throw projectsError;
 
@@ -129,14 +137,18 @@ const ProjectsContent = () => {
         setClients(clientProfiles || []);
       }
 
-      setProjects(projectsData || []);
-    } catch (error: any) {
+      setHasMore((projectsData?.length || 0) === PAGE_SIZE);
+      setPage(pageIndex);
+      setProjects((prev) => (pageIndex === 0 ? projectsData || [] : [...prev, ...(projectsData || [])]));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Something went wrong";
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
+      setLoadingMore(false);
       setLoading(false);
     }
   };
