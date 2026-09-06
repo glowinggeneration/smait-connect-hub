@@ -44,8 +44,9 @@ const ResetPassword = () => {
       toast.success("Credential updated");
       await supabase.auth.signOut();
       navigate("/login");
-    } catch (error: any) {
-      toast.error(error.message || "Could not update credential");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error(errorMessage || "Could not update credential");
     } finally {
       setIsLoading(false);
     }

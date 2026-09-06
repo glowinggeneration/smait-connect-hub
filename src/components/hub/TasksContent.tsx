@@ -106,7 +106,7 @@ const TasksContent = () => {
       setPage(pageIndex);
       setTasks((prev) => (pageIndex === 0 ? tasksWithNames : [...prev, ...tasksWithNames]));
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
+      const message = error instanceof Error ? errorMessage : "Something went wrong";
       toast.error("Error", { description: message });
     } finally {
       setLoading(false);
@@ -153,8 +153,9 @@ const TasksContent = () => {
       setIsDialogOpen(false);
       fetchData();
       toast.success("Task Created", { description: "Task has been added successfully." });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setIsCreating(false);
     }
@@ -170,8 +171,9 @@ const TasksContent = () => {
 
       if (error) throw error;
       setTasks(tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -181,8 +183,9 @@ const TasksContent = () => {
       if (error) throw error;
       setTasks(tasks.filter((t) => t.id !== taskId));
       toast.success("Deleted", { description: "Task has been deleted." });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 

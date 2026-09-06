@@ -106,8 +106,9 @@ const MeetingsContent = () => {
 
       if (clientsError) throw clientsError;
       setClients(clientsData || []);
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -162,8 +163,9 @@ const MeetingsContent = () => {
       });
       setIsDialogOpen(false);
       toast.success("Meeting Scheduled", { description: `${data.title} has been added to the calendar.` });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setIsCreating(false);
     }
@@ -180,8 +182,9 @@ const MeetingsContent = () => {
 
       setMeetings(meetings.filter((m) => m.id !== id));
       toast.success("Meeting Deleted", { description: "The meeting has been removed." });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 

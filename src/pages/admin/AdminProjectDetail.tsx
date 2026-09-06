@@ -68,8 +68,9 @@ const AdminProjectDetail = () => {
       };
 
       setProject(projectWithPhases);
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -126,8 +127,9 @@ const AdminProjectDetail = () => {
       }
 
       toast.success("Project Updated", { description: `Progress saved: ${overallProgress}%` });
-    } catch (error: any) {
-      toast.error("Error saving changes", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error saving changes", { description: errorMessage });
     }
   };
 

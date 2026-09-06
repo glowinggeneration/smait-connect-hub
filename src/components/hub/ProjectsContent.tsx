@@ -141,7 +141,7 @@ const ProjectsContent = () => {
       setPage(pageIndex);
       setProjects((prev) => (pageIndex === 0 ? projectsData || [] : [...prev, ...(projectsData || [])]));
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
+      const message = error instanceof Error ? errorMessage : "Something went wrong";
       toast.error("Error", { description: message });
     } finally {
       setLoadingMore(false);
@@ -191,8 +191,9 @@ const ProjectsContent = () => {
       }
 
       toast.success("Progress Updated", { description: `Project is now ${progress}% complete` });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -245,8 +246,9 @@ const ProjectsContent = () => {
       setNewProject({ name: "", description: "", client_id: "", due_date: "" });
       setIsDialogOpen(false);
       toast.success("Project Created", { description: `${data.name} has been created successfully.` });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setIsCreating(false);
     }
@@ -264,8 +266,9 @@ const ProjectsContent = () => {
       if (error) throw error;
 
       toast.success("Project Deleted", { description: `${projectName} has been deleted successfully.` });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setDeletingProjectId(null);
     }

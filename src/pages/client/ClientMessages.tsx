@@ -110,8 +110,9 @@ const ClientMessages = () => {
           supabase.removeChannel(channel);
         };
       }
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -173,8 +174,9 @@ const ClientMessages = () => {
         },
       ]);
       setNewMessage("");
-    } catch (error: any) {
-      toast.error("Error sending message", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error sending message", { description: errorMessage });
     } finally {
       setSending(false);
     }

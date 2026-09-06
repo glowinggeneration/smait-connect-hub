@@ -123,8 +123,9 @@ const UsersContent = () => {
       } else {
         setUsers([]);
       }
-    } catch (error: any) {
-      toast.error("Error fetching users", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error fetching users", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -165,7 +166,7 @@ const UsersContent = () => {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to create user');
+        throw new Error(response.errorMessage || 'Failed to create user');
       }
 
       if (response.data?.error) {
@@ -177,17 +178,18 @@ const UsersContent = () => {
       setNewUser({ full_name: "", email: "", password: "", phone: "", company: "", role: "client" });
       setIsDialogOpen(false);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err) => {
           if (err.path[0]) {
-            fieldErrors[err.path[0].toString()] = err.message;
+            fieldErrors[err.path[0].toString()] = errMessage;
           }
         });
         setErrors(fieldErrors);
       } else {
-        toast.error("Error Creating User", { description: error.message });
+        toast.error("Error Creating User", { description: errorMessage });
       }
     } finally {
       setIsCreating(false);
@@ -200,8 +202,9 @@ const UsersContent = () => {
       if (error) throw error;
       
       toast.success("Password Reset", { description: `A password reset link has been sent to ${user.email}.` });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -222,7 +225,7 @@ const UsersContent = () => {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to delete user');
+        throw new Error(response.errorMessage || 'Failed to delete user');
       }
 
       if (response.data?.error) {
@@ -234,8 +237,9 @@ const UsersContent = () => {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       fetchUsers();
-    } catch (error: any) {
-      toast.error("Error Deleting User", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error Deleting User", { description: errorMessage });
     } finally {
       setIsDeleting(false);
     }

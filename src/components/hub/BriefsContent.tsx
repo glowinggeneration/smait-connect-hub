@@ -85,8 +85,9 @@ const BriefsContent = () => {
           setDocuments(docsMap);
         }
       }
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -114,8 +115,9 @@ const BriefsContent = () => {
       }
 
       toast.success("Status Updated", { description: `Brief has been ${newStatus}.` });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 
@@ -133,8 +135,9 @@ const BriefsContent = () => {
       a.download = doc.file_name;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     }
   };
 

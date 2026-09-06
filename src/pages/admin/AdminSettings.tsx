@@ -71,8 +71,9 @@ const AdminSettings = () => {
         phone: data.phone || "",
         company: data.company || "",
       });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -96,8 +97,9 @@ const AdminSettings = () => {
 
       setProfile({ ...profile, ...formData });
       toast.success("Profile Updated", { description: "Your profile has been saved successfully." });
-    } catch (error: any) {
-      toast.error("Error", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error", { description: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -146,8 +148,9 @@ const AdminSettings = () => {
 
       setProfile({ ...profile, avatar_url: publicUrl });
       toast.success("Avatar Updated", { description: "Your avatar has been updated successfully." });
-    } catch (error: any) {
-      toast.error("Error uploading avatar", { description: error.message });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error("Error uploading avatar", { description: errorMessage });
     } finally {
       setUploadingAvatar(false);
     }

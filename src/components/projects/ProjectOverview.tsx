@@ -139,8 +139,9 @@ export const ProjectOverview = ({
 
       toast.success("Project name updated");
       setIsEditingName(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update project name");
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+      toast.error(errorMessage || "Failed to update project name");
       setEditedName(project.name);
     } finally {
       setIsSavingName(false);

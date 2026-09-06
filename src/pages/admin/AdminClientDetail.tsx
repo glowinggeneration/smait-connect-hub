@@ -72,8 +72,9 @@ const AdminClientDetail = () => {
 
         if (error) throw error;
         setClient(data);
-      } catch (error: any) {
-        toast.error("Error", { description: error.message });
+      } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? errorMessage : "Something went wrong";
+        toast.error("Error", { description: errorMessage });
         navigate('/admin/clients');
       } finally {
         setLoading(false);
