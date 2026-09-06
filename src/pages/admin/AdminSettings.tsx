@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { User, Bell, Shield, Palette, Save, Camera, Loader2 } from "lucide-react";
 
 interface UserProfile {
@@ -52,7 +53,7 @@ const AdminSettings = () => {
 
   const fetchProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
       const { data, error } = await supabase

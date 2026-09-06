@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 
 interface Meeting {
   id: string;
@@ -132,7 +133,7 @@ const MeetingsContent = () => {
 
     setIsCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase

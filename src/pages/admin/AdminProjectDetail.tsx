@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, Layers, FileText, MessageSquare, Loader2, Milestone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 
 const AdminProjectDetail = () => {
   const navigate = useNavigate();
@@ -110,7 +111,7 @@ const AdminProjectDetail = () => {
       if (error) throw error;
 
       // Log activity
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         await supabase.from("activities").insert({
           user_id: user.id,

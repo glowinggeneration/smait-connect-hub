@@ -26,6 +26,7 @@ import {
 import { Plus, Search, ListTodo, Loader2, Trash2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { format } from "date-fns";
 
 interface Task {
@@ -120,7 +121,7 @@ const TasksContent = () => {
 
     setIsCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase.from("tasks").insert({

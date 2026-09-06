@@ -38,6 +38,7 @@ import { ProjectProgressSlider } from "@/components/projects/ProjectProgressSlid
 import { Plus, Search, FolderKanban, Loader2, Calendar, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { formatDistanceToNow, differenceInDays, parseISO } from "date-fns";
 
 interface Project {
@@ -164,7 +165,7 @@ const ProjectsContent = () => {
 
       if (error) throw error;
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         await supabase.from("activities").insert({
           user_id: user.id,
@@ -227,7 +228,7 @@ const ProjectsContent = () => {
 
       if (error) throw error;
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         await supabase.from("activities").insert({
           user_id: user.id,

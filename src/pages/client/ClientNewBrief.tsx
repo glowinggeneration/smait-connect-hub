@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { Globe, Smartphone, Monitor, Bot, Upload, X, FileText, Calendar } from "lucide-react";
 
@@ -48,7 +49,7 @@ const ClientNewBrief = () => {
     setIsSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) {
         toast.error("You must be logged in");
         return;

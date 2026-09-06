@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -159,7 +160,7 @@ const LeadsContent = () => {
 
   const createMutation = useMutation({
     mutationFn: async (leadData: typeof formData & { assignees: string[] }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data: lead, error } = await supabase
@@ -273,7 +274,7 @@ const LeadsContent = () => {
 
   const convertToProjectMutation = useMutation({
     mutationFn: async (lead: Lead) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       let clientId: string | null = null;

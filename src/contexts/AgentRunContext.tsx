@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 
 interface AgentOutput {
@@ -239,7 +240,7 @@ export const AgentRunProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) {
       toast.error("Not authenticated");
       return null;

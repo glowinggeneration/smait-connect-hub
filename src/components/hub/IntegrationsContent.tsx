@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { Video, Calendar, Link2, CheckCircle2, XCircle, Settings2, ExternalLink, Copy, Loader2 } from "lucide-react";
 
@@ -62,7 +63,7 @@ const IntegrationsContent = () => {
 
   const fetchIntegrations = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -112,7 +113,7 @@ const IntegrationsContent = () => {
     setConfiguring(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
