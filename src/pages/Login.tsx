@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,15 @@ const Login = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { session, userRole, loading } = useAuth();
+
+  // Already signed in — go straight to the right home screen
+  useEffect(() => {
+    if (!loading && session) {
+      navigate(userRole === "admin" ? "/command" : "/client", { replace: true });
+    }
+  }, [loading, session, userRole, navigate]);
+
 
   const handleResetRequest = async () => {
     if (!email) {
@@ -55,13 +65,10 @@ const Login = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", data.user.id)
-        .single();
+        .maybeSingle();
 
-      if (roleData?.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/client");
-      }
+      toast.success("Signed in");
+      navigate(roleData?.role === "admin" ? "/command" : "/client", { replace: true });
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       toast.error(errorMessage || "Authentication failed");

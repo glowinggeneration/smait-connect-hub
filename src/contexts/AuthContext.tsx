@@ -33,8 +33,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .single();
-    setUserRole((data?.role as "admin" | "client") || null);
+      .maybeSingle();
+    setUserRole((data?.role as "admin" | "client") || "client");
   };
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (location.pathname !== "/" && location.pathname !== "/login") {
             navigate("/login", { replace: true });
           }
-        } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        } else {
           if (currentSession?.user) {
             // Use setTimeout to prevent Supabase client deadlock
             setTimeout(() => fetchRole(currentSession.user.id), 0);
