@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  FileImage, FileText, Search, 
-  Download, Loader2, Upload, Trash2
+import {
+  FileImage, FileText, Search,
+  Download, Loader2, Upload, Trash2, X
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -25,11 +25,23 @@ interface Asset {
   url: string;
   category: string;
   createdAt: string;
+  projectId?: string | null;
   projectName?: string;
   bucket?: string;
   storagePath?: string;
   uploaded?: boolean;
 }
+
+const CATEGORY_PRESETS = [
+  "Brand Assets",
+  "Deliverables",
+  "Contracts",
+  "Research",
+  "Design",
+  "Reference",
+];
+
+type SortKey = "recent" | "oldest" | "name";
 
 const Assets = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -42,6 +54,9 @@ const Assets = () => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadCollection, setUploadCollection] = useState("");
   const [uploadProjectId, setUploadProjectId] = useState("");
+  const [initiativeFilter, setInitiativeFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortKey, setSortKey] = useState<SortKey>("recent");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchAssets = useCallback(async () => {
@@ -54,7 +69,7 @@ const Assets = () => {
       { data: projectList },
     ] = await Promise.all([
       supabase.from("brief_documents").select("*, project_briefs(title)"),
-      supabase.from("milestone_attachments").select("*, project_milestones(title, projects(name))"),
+      supabase.from("milestone_attachments").select("*, project_milestones(title, project_id, projects(name))"),
       supabase.from("project_files").select("*, projects(name)").order("created_at", { ascending: false }),
       supabase.from("projects").select("id, name").order("name"),
     ]);
@@ -72,6 +87,7 @@ const Assets = () => {
         uploaded: true,
         category: file.collection,
         createdAt: file.created_at,
+        projectId: file.project_id,
         projectName: (file as { projects?: { name?: string } }).projects?.name || file.collection,
       });
     });
@@ -97,6 +113,7 @@ const Assets = () => {
         url: att.url,
         category: "Deliverables",
         createdAt: att.created_at,
+        projectId: att.project_milestones?.project_id,
         projectName: att.project_milestones?.projects?.name,
       });
     });
@@ -201,7 +218,12 @@ const Assets = () => {
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
 
-  const collections = Array.from(
+  const categories = useMemo(
+    () => Array.from(new Set([...CATEGORY_PRESETS, ...assets.map(a => a.category)])).sort(),
+    [assets]
+  );
+
+  const collections = useMemo(() => Array.from(
     assets.reduce((map, asset) => {
       const key = asset.projectName || asset.category;
       const bucket = map.get(key) ?? [];
@@ -209,19 +231,49 @@ const Assets = () => {
       map.set(key, bucket);
       return map;
     }, new Map<string, Asset[]>())
-  ).sort((a, b) => b[1].length - a[1].length);
+  ).sort((a, b) => b[1].length - a[1].length), [assets]);
 
-  const filteredAssets = assets.filter(asset => {
-    const matchesSearch = asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.projectName?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFolder =
-      !activeFolder || (asset.projectName || asset.category) === activeFolder;
-    if (activeTab === "all") return matchesSearch && matchesFolder;
-    return matchesSearch && matchesFolder && asset.type === activeTab;
-  });
+  const filteredAssets = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const list = assets.filter(asset => {
+      const matchesSearch = !q ||
+        asset.name.toLowerCase().includes(q) ||
+        asset.category.toLowerCase().includes(q) ||
+        (asset.projectName?.toLowerCase().includes(q) ?? false) ||
+        asset.type.includes(q);
 
+      const matchesFolder =
+        !activeFolder || (asset.projectName || asset.category) === activeFolder;
+
+      const matchesInitiative =
+        initiativeFilter === "all" ||
+        (initiativeFilter === "none" ? !asset.projectId : asset.projectId === initiativeFilter);
+
+      const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
+      const matchesType = activeTab === "all" || asset.type === activeTab;
+
+      return matchesSearch && matchesFolder && matchesInitiative && matchesCategory && matchesType;
+    });
+
+    return list.sort((a, b) => {
+      if (sortKey === "name") return a.name.localeCompare(b.name);
+      const at = new Date(a.createdAt).getTime();
+      const bt = new Date(b.createdAt).getTime();
+      return sortKey === "oldest" ? at - bt : bt - at;
+    });
+  }, [assets, searchQuery, activeFolder, initiativeFilter, categoryFilter, activeTab, sortKey]);
+
+  const hasFilters =
+    !!activeFolder || initiativeFilter !== "all" || categoryFilter !== "all" || !!searchQuery.trim();
+
+  const clearFilters = () => {
+    setActiveFolder(null);
+    setInitiativeFilter("all");
+    setCategoryFilter("all");
+    setSearchQuery("");
+  };
+
+  const selectClass = "h-9 rounded-md border border-input bg-background px-3 text-sm";
 
   return (
     <DashboardLayout userType="admin">
@@ -230,7 +282,7 @@ const Assets = () => {
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
             <p className="text-sm text-muted-foreground">
-              Reusable resources across initiatives
+              Every file across initiatives — upload, categorise and search
             </p>
           </div>
 
@@ -264,13 +316,29 @@ const Assets = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="asset-collection">Folder name</Label>
+                  <Label htmlFor="asset-collection">Category / folder</Label>
                   <Input
                     id="asset-collection"
+                    list="asset-category-options"
                     placeholder={projects.find(p => p.id === uploadProjectId)?.name || "e.g. Brand Assets"}
                     value={uploadCollection}
                     onChange={(e) => setUploadCollection(e.target.value)}
                   />
+                  <datalist id="asset-category-options">
+                    {categories.map(c => <option key={c} value={c} />)}
+                  </datalist>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {CATEGORY_PRESETS.map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setUploadCollection(c)}
+                        className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="asset-files">Files</Label>
@@ -301,15 +369,57 @@ const Assets = () => {
           </Dialog>
         </div>
 
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search all collections..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
 
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search assets..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+          <select
+            aria-label="Filter by initiative"
+            value={initiativeFilter}
+            onChange={(e) => setInitiativeFilter(e.target.value)}
+            className={selectClass}
+          >
+            <option value="all">All initiatives</option>
+            <option value="none">Unassigned</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+
+          <select
+            aria-label="Filter by category"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className={selectClass}
+          >
+            <option value="all">All categories</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          <select
+            aria-label="Sort files"
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            className={selectClass}
+          >
+            <option value="recent">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name">Name A–Z</option>
+          </select>
+
+          {hasFilters && (
+            <Button variant="ghost" size="sm" className="h-9 gap-1 text-xs" onClick={clearFilters}>
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
         </div>
 
         {!loading && collections.length > 0 && (
@@ -352,32 +462,27 @@ const Assets = () => {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-6">
-            <TabsTrigger 
-              value="all" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
-            >
-              All
-            </TabsTrigger>
-            <TabsTrigger 
-              value="image" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
-            >
-              Images
-            </TabsTrigger>
-            <TabsTrigger 
-              value="document" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
-            >
-              Documents
-            </TabsTrigger>
-            <TabsTrigger 
-              value="deliverable" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
-            >
-              Deliverables
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-end justify-between gap-4 border-b border-border">
+            <TabsList className="bg-transparent border-none rounded-none h-auto p-0 gap-6">
+              {[
+                { value: "all", label: "All" },
+                { value: "image", label: "Images" },
+                { value: "document", label: "Documents" },
+                { value: "deliverable", label: "Deliverables" },
+              ].map(t => (
+                <TabsTrigger
+                  key={t.value}
+                  value={t.value}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 pb-2 text-sm"
+                >
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <p className="pb-2 text-xs text-muted-foreground">
+              {filteredAssets.length} of {assets.length} files
+            </p>
+          </div>
 
           <TabsContent value={activeTab} className="mt-6">
             {loading ? (
@@ -389,6 +494,11 @@ const Assets = () => {
                 <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                   <FileText className="h-8 w-8 mb-3 opacity-50" />
                   <p className="text-sm">No assets found</p>
+                  {hasFilters && (
+                    <Button variant="ghost" size="sm" className="mt-2 text-xs" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -410,16 +520,21 @@ const Assets = () => {
                             <p className="text-sm font-medium truncate">
                               {asset.name}
                             </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {asset.projectName || asset.category}
-                            </p>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-xs text-muted-foreground truncate">
+                                {asset.projectName || "Unassigned"}
+                              </span>
+                              <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground shrink-0">
+                                {asset.category}
+                              </span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-xs text-muted-foreground capitalize">
+                          <span className="hidden sm:inline text-xs text-muted-foreground capitalize">
                             {asset.type}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="hidden sm:inline text-xs text-muted-foreground">
                             {format(new Date(asset.createdAt), "MMM d, yyyy")}
                           </span>
                           <Button 
