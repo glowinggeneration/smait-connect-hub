@@ -235,6 +235,37 @@ const TasksContent = () => {
           />
         </div>
 
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal", !dueFrom && "text-muted-foreground")}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                {dueFrom ? format(dueFrom, "MMM d") : "From"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dueFrom} onSelect={setDueFrom} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal", !dueTo && "text-muted-foreground")}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                {dueTo ? format(dueTo, "MMM d") : "To"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dueTo} onSelect={setDueTo} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          {(dueFrom || dueTo) && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setDueFrom(undefined); setDueTo(undefined); }}>
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="gradient">
