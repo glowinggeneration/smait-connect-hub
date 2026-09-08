@@ -60,6 +60,8 @@ const TasksContent = () => {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dueFrom, setDueFrom] = useState<Date | undefined>();
+  const [dueTo, setDueTo] = useState<Date | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -118,9 +120,16 @@ const TasksContent = () => {
   };
 
 
-  const filteredTasks = tasks.filter((task) =>
-    task.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTasks = tasks.filter((task) => {
+    if (!task.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (dueFrom || dueTo) {
+      if (!task.due_date) return false;
+      const due = new Date(task.due_date);
+      if (dueFrom && isBefore(due, startOfDay(dueFrom))) return false;
+      if (dueTo && isAfter(due, endOfDay(dueTo))) return false;
+    }
+    return true;
+  });
 
   const tasksByStatus = {
     all: filteredTasks,
