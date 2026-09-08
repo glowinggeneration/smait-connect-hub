@@ -393,17 +393,18 @@ const TasksContent = () => {
                       <div className="flex items-center gap-4">
                         <button
                           onClick={() => toggleTaskStatus(task.id, task.status)}
-                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          aria-label={task.status === "completed" ? "Mark as not done" : "Mark as done"}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                             task.status === "completed"
-                              ? "bg-emerald-500 border-emerald-500"
-                              : "border-muted-foreground hover:border-primary"
+                              ? "bg-emerald-500/90 border-emerald-500"
+                              : "border-muted-foreground/50 hover:border-foreground bg-transparent"
                           }`}
                         >
-                          {task.status === "completed" && <CheckCircle2 className="w-4 h-4 text-white" />}
+                          {task.status === "completed" && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
                         </button>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+                            <h3 className={`font-medium transition-colors ${task.status === "completed" ? "line-through text-muted-foreground decoration-muted-foreground/50" : ""}`}>
                               {task.title}
                             </h3>
                             {getPriorityBadge(task.priority)}
@@ -418,16 +419,17 @@ const TasksContent = () => {
                                 {format(new Date(task.due_date), "MMM d")}
                               </span>
                             )}
-                            {task.assigned_name && (
-                              <span className="flex items-center gap-1">
-                                <Avatar className="w-4 h-4">
-                                  <AvatarFallback className="text-[8px]">{getInitials(task.assigned_name)}</AvatarFallback>
-                                </Avatar>
-                                {task.assigned_name}
-                              </span>
-                            )}
                           </div>
                         </div>
+                        {task.assigned_name && (
+                          <div className="flex items-center shrink-0" title={task.assigned_name}>
+                            <Avatar className="w-7 h-7 border-2 border-background">
+                              <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                                {getInitials(task.assigned_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => deleteTask(task.id)}>
                           <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
                         </Button>
