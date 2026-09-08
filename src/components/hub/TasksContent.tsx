@@ -23,11 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ListTodo, Loader2, Trash2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Search, ListTodo, Loader2, Trash2, Check, Clock, CalendarIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
-import { format } from "date-fns";
+import { format, isBefore, isAfter, startOfDay, endOfDay } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
@@ -57,6 +60,8 @@ const TasksContent = () => {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dueFrom, setDueFrom] = useState<Date | undefined>();
+  const [dueTo, setDueTo] = useState<Date | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -115,9 +120,16 @@ const TasksContent = () => {
   };
 
 
-  const filteredTasks = tasks.filter((task) =>
-    task.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTasks = tasks.filter((task) => {
+    if (!task.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (dueFrom || dueTo) {
+      if (!task.due_date) return false;
+      const due = new Date(task.due_date);
+      if (dueFrom && isBefore(due, startOfDay(dueFrom))) return false;
+      if (dueTo && isAfter(due, endOfDay(dueTo))) return false;
+    }
+    return true;
+  });
 
   const tasksByStatus = {
     all: filteredTasks,
@@ -222,6 +234,37 @@ const TasksContent = () => {
             className="pl-10"
           />
         </div>
+
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal", !dueFrom && "text-muted-foreground")}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                {dueFrom ? format(dueFrom, "MMM d") : "From"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dueFrom} onSelect={setDueFrom} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal", !dueTo && "text-muted-foreground")}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                {dueTo ? format(dueTo, "MMM d") : "To"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dueTo} onSelect={setDueTo} initialFocus className="p-3 pointer-events-auto" />
+            </PopoverContent>
+          </Popover>
+          {(dueFrom || dueTo) && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setDueFrom(undefined); setDueTo(undefined); }}>
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -350,17 +393,18 @@ const TasksContent = () => {
                       <div className="flex items-center gap-4">
                         <button
                           onClick={() => toggleTaskStatus(task.id, task.status)}
-                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          aria-label={task.status === "completed" ? "Mark as not done" : "Mark as done"}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                             task.status === "completed"
-                              ? "bg-emerald-500 border-emerald-500"
-                              : "border-muted-foreground hover:border-primary"
+                              ? "bg-emerald-500/90 border-emerald-500"
+                              : "border-muted-foreground/50 hover:border-foreground bg-transparent"
                           }`}
                         >
-                          {task.status === "completed" && <CheckCircle2 className="w-4 h-4 text-white" />}
+                          {task.status === "completed" && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
                         </button>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+                            <h3 className={`font-medium transition-colors ${task.status === "completed" ? "line-through text-muted-foreground decoration-muted-foreground/50" : ""}`}>
                               {task.title}
                             </h3>
                             {getPriorityBadge(task.priority)}
@@ -375,16 +419,17 @@ const TasksContent = () => {
                                 {format(new Date(task.due_date), "MMM d")}
                               </span>
                             )}
-                            {task.assigned_name && (
-                              <span className="flex items-center gap-1">
-                                <Avatar className="w-4 h-4">
-                                  <AvatarFallback className="text-[8px]">{getInitials(task.assigned_name)}</AvatarFallback>
-                                </Avatar>
-                                {task.assigned_name}
-                              </span>
-                            )}
                           </div>
                         </div>
+                        {task.assigned_name && (
+                          <div className="flex items-center shrink-0" title={task.assigned_name}>
+                            <Avatar className="w-7 h-7 border-2 border-background">
+                              <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                                {getInitials(task.assigned_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => deleteTask(task.id)}>
                           <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
                         </Button>
