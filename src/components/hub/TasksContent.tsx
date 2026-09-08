@@ -23,11 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ListTodo, Loader2, Trash2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Search, ListTodo, Loader2, Trash2, Check, Clock, CalendarIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
-import { format } from "date-fns";
+import { format, isBefore, isAfter, startOfDay, endOfDay } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
